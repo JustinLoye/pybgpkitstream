@@ -5,11 +5,11 @@ A drop-in replacement for PyBGPStream using BGPKIT
 ## Features
 
 - Effortlessly switch to another BGP stream:
-  - Designed to be a seamless, drop-in replacement. ([example](tests/test_stream.py#L38))
-  - Lazy message generation: generates time-ordered BGP messages on the fly, consuming minimal memory and making it suitable for large datasets.
+  - Designed to be a seamless, drop-in replacement ([example](tests/test_stream.py#L38))
+  - Lazy message generation: generates time-ordered BGP messages on the fly, consuming minimal memory and making it suitable for large datasets
   - Supports multiple route collectors
-  - Supports both ribs and updates.
-- Caching with concurrent downloading is enabled, and the caching mechanism is fully compatible with the BGPKIT parser's caching functionality.
+  - Supports both ribs and updates
+- Caching with concurrent downloading is enabled, and the caching mechanism is fully compatible with the BGPKIT parser's caching functionality
 - [Good-enough performances](examples/perf.ipynb)
 - A CLI tool
 
@@ -48,6 +48,6 @@ BGPKIT broker and parser are great, but cannot be used to create an ordered stre
 
 ## Issues
 
-- Program will crash when working with many update files per collector (~ more than few hours of data), only when caching is disabled. This might be caused by [BGPKIT parser not being lazy](https://github.com/bgpkit/bgpkit-parser/pull/239). See [details and workaround fix](examples/many_updates.ipynb).
+- Program will crash when working with many update files per collector (~ more than few hours of data), only when caching is disabled. This might be caused by [BGPKIT parser not being lazy](https://github.com/bgpkit/bgpkit-parser/pull/239). See [details and workaround fix](examples/many_updates.ipynb)
 - Filters are designed with BGPKIT in mind, and can slightly differ to pybgpstream. See [this file](tests/pybgpstream_utils.py) for a conversion to PyBGPStream filter. Note that for now the filters have not been heavily tested...
-- ... just like the rest of the project. Use at your own risk. The only tests I did are in /tests.
+- ... just like the rest of the project. Use at your own risk. The only tests I did are in /tests
