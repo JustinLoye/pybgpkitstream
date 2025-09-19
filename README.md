@@ -4,18 +4,18 @@ A drop-in replacement for PyBGPStream using BGPKIT
 
 ## Features
 
-- Effortlessly switch to another BGP stream:
-  - Designed to be a seamless, drop-in replacement ([example](tests/test_stream.py#L38))
+- Effortless BGP Stream Switching:
+  - Seamless, drop-in replacement ([example](tests/test_stream.py#L38))
   - Lazy message generation: generates time-ordered BGP messages on the fly, consuming minimal memory and making it suitable for large datasets
   - Supports multiple route collectors
   - Supports both ribs and updates
-- Caching with concurrent downloading is enabled, and the caching mechanism is fully compatible with the BGPKIT parser's caching functionality
-- [Good-enough performances](examples/perf.ipynb)
+- Caching with concurrent downloading is enabled and is fully compatible with the BGPKIT parser's caching functionality.
+- [Similar performance to PyBGPStream](examples/perf.ipynb)
 - A CLI tool
 
 ## Quick start
 
-Installation
+Installation:
 
 ```sh
 pip install pybgpkitstream
@@ -43,7 +43,7 @@ for _ in stream:
 print(f"Processed {n_elems} BGP elements")
 ```
 
-or in the terminal
+or in the terminal:
 
 ```sh
 pybgpkitstream --start-time 2010-09-01T00:00:00 --end-time 2010-09-01T01:59:00 --collectors route-views.sydney route-views.wide --data-types updates > updates.txt
