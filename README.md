@@ -15,6 +15,14 @@ A drop-in replacement for PyBGPStream using BGPKIT
 
 ## Quick start
 
+Installation
+
+```sh
+pip install pybgpkitstream
+```
+
+Usage:
+
 ```python
 import datetime
 from pybgpkitstream import BGPStreamConfig, BGPKITStream
@@ -33,6 +41,12 @@ for _ in stream:
     n_elems += 1
     
 print(f"Processed {n_elems} BGP elements")
+```
+
+or in the terminal
+
+```sh
+pybgpkitstream --start-time 2010-09-01T00:00:00 --end-time 2010-09-01T01:59:00 --collectors route-views.sydney route-views.wide --data-types updates > updates.txt
 ```
 
 ## Motivation
