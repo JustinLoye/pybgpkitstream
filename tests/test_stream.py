@@ -3,7 +3,7 @@ import datetime
 from itertools import pairwise
 from pybgpkitstream import BGPKITStream, BGPStreamConfig
 import pybgpstream
-from pybgpstream_utils import make_bgpstream
+from tests.pybgpstream_utils import make_bgpstream
 
 
 @pytest.fixture
