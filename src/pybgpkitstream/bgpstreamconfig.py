@@ -40,6 +40,9 @@ class FilterOptions(BaseModel):
     as_path: str | None = Field(
         default=None, description="Filter by a regular expression matching the AS path."
     )
+    ip_version: Literal["ipv4", "ipv6"] | None = Field(
+        default=None, description="Filter by ip version."
+    )
 
 
 class BGPStreamConfig(BaseModel):
