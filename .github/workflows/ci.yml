@@ -23,7 +23,7 @@ jobs:
       - name: Install libBGPStream Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential curl zlib1g-dev libbz2-dev libcurl4-openssl-dev librdkafka-dev
+          sudo apt-get install -y build-essential curl zlib1g-dev libbz2-dev libcurl4-openssl-dev librdkafka-dev autoconf automake libtool
 
       - name: Compile and Install libBGPStream
         run: |
@@ -32,6 +32,7 @@ jobs:
           curl -LO https://github.com/LibtraceTeam/wandio/archive/refs/tags/4.2.4-1.tar.gz
           tar zxf 4.2.4-1.tar.gz
           cd wandio-4.2.4-1/
+          autoreconf -i
           ./configure
           make
           sudo make install
