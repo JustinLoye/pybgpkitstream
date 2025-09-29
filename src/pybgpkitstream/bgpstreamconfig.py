@@ -63,3 +63,4 @@ class BGPStreamConfig(BaseModel):
         description="Specifies the directory for caching downloaded files.",
     )
     filters: FilterOptions | None = Field(default=None, description="Optional filters")
+    max_concurrent_downloads: int | None = Field(default=None, description="Maximum concurrent downloads when caching")

@@ -53,6 +53,7 @@ class BGPKITStream:
         data_type: list[Literal["update", "rib"]],
         cache_dir: str | None,
         filters: dict = {},
+        max_concurrent_downloads: int = 10,
     ):
         self.ts_start = ts_start
         self.ts_end = ts_end
@@ -60,6 +61,7 @@ class BGPKITStream:
         self.data_type = data_type
         self.cache_dir = cache_dir
         self.filters = filters
+        self.max_concurrent_downloads = max_concurrent_downloads
 
         self.broker = bgpkit.Broker()
 
@@ -129,8 +131,7 @@ class BGPKITStream:
         self.paths = {"rib": defaultdict(list), "update": defaultdict(list)}
         tasks = []
 
-        CONCURRENT_DOWNLOADS = 10
-        semaphore = asyncio.Semaphore(CONCURRENT_DOWNLOADS)
+        semaphore = asyncio.Semaphore(self.max_concurrent_downloads)
 
         conn = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=conn) as session:
@@ -154,7 +155,7 @@ class BGPKITStream:
 
             if tasks:
                 logging.info(
-                    f"Starting download of {len(tasks)} files with a concurrency of {CONCURRENT_DOWNLOADS}..."
+                    f"Starting download of {len(tasks)} files with a concurrency of {self.max_concurrent_downloads}..."
                 )
                 results = await asyncio.gather(*tasks)
 
@@ -225,4 +226,7 @@ class BGPKITStream:
             filters=config.filters.model_dump(exclude_unset=True)
             if config.filters
             else {},
+            max_concurrent_downloads=config.max_concurrent_downloads
+            if config.max_concurrent_downloads
+            else 10,
         )

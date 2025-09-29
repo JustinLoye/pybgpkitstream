@@ -1,5 +1,6 @@
 import pytest
 import datetime
+import tempfile
 from itertools import pairwise
 from pybgpkitstream import BGPKITStream, BGPStreamConfig
 import pybgpstream
@@ -17,6 +18,21 @@ def config():
 
 
 @pytest.fixture
+def config_with_cache():
+    """Configuration with a temporary cache directory."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cache_config = BGPStreamConfig(
+            start_time=datetime.datetime(2010, 9, 1, 0, 0),
+            end_time=datetime.datetime(2010, 9, 1, 2, 0),
+            collectors=["route-views.sydney", "route-views.wide"],
+            data_types=["updates"],
+            cache_dir=tmpdir,
+            max_concurrent_downloads=8,
+        )
+        yield cache_config
+
+
+@pytest.fixture
 def pybgpkit_stream(config):
     """A fixture that returns a BGPKITStream object."""
     return BGPKITStream.from_config(config)
@@ -28,11 +44,32 @@ def pybgpstream_stream(config):
     return make_bgpstream(config)
 
 
+@pytest.fixture
+def pybgpkit_stream_with_cache(config_with_cache):
+    """A BGPKITStream object using the config with cache."""
+    return BGPKITStream.from_config(config_with_cache)
+
+
+@pytest.fixture
+def pybgpstream_stream_with_cache(config_with_cache):
+    """A pybgpstream.BGPStream object using the config with cache."""
+    return make_bgpstream(config_with_cache)
+
+
 def test_pybgpkitstream(pybgpkit_stream, pybgpstream_stream, config):
     """Test if the streamw are consistent and if they return the same number of elements"""
     assert validate_stream(pybgpkit_stream, config) == validate_stream(
         pybgpstream_stream, config
     )
+
+
+def test_pybgpkitstream_with_cache(
+    pybgpkit_stream_with_cache, pybgpstream_stream_with_cache, config_with_cache
+):
+    """Test if the streams are consistent and if they return the same number of elements (WITH CACHE)"""
+    assert validate_stream(
+        pybgpkit_stream_with_cache, config_with_cache
+    ) == validate_stream(pybgpstream_stream_with_cache, config_with_cache)
 
 
 def validate_stream(
