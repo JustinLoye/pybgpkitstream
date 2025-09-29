@@ -43,6 +43,7 @@ jobs:
           curl -LO https://github.com/CAIDA/libbgpstream/releases/download/v2.2.0/libbgpstream-2.2.0.tar.gz
           tar zxf libbgpstream-2.2.0.tar.gz
           cd libbgpstream-2.2.0/
+          sed -i '13436 i #define _GNU_SOURCE' configure
           ./configure
           make
           sudo make install
