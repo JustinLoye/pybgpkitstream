@@ -63,4 +63,10 @@ class BGPStreamConfig(BaseModel):
         description="Specifies the directory for caching downloaded files.",
     )
     filters: FilterOptions | None = Field(default=None, description="Optional filters")
-    max_concurrent_downloads: int | None = Field(default=None, description="Maximum concurrent downloads when caching")
+    max_concurrent_downloads: int | None = Field(
+        default=None, description="Maximum concurrent downloads when caching"
+    )
+    chunk_time: datetime.timedelta | None = Field(
+        default=datetime.timedelta(hours=2),
+        description="Interval for the fetch/parse cycle (avoid long prefetch time)",
+    )

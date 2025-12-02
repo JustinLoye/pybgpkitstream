@@ -47,13 +47,14 @@ def crc32(input_str: str):
 class BGPKITStream:
     def __init__(
         self,
-        ts_start: datetime.datetime,
-        ts_end: datetime.datetime,
+        ts_start: float,
+        ts_end: float,
         collector_id: str,
         data_type: list[Literal["update", "rib"]],
         cache_dir: str | None,
         filters: dict = {},
         max_concurrent_downloads: int = 10,
+        chunk_time: float | None = datetime.timedelta(hours=2).seconds,
     ):
         self.ts_start = ts_start
         self.ts_end = ts_end
@@ -62,6 +63,7 @@ class BGPKITStream:
         self.cache_dir = cache_dir
         self.filters = filters
         self.max_concurrent_downloads = max_concurrent_downloads
+        self.chunk_time = chunk_time
 
         self.broker = bgpkit.Broker()
 
@@ -171,6 +173,35 @@ class BGPKITStream:
         return ((elem.timestamp, elem, is_rib, collector) for elem in iterator)
 
     def __iter__(self) -> Iterator[BGPElement]:
+        # Manager mode: spawn smaller worker streams to balance fetch/parse
+        if self.chunk_time:
+            current = self.ts_start
+
+            while current < self.ts_end:
+                chunk_end = min(current + self.chunk_time, self.ts_end)
+
+                logging.info(
+                    f"Processing chunk: {datetime.datetime.fromtimestamp(current)} "
+                    f"to {datetime.datetime.fromtimestamp(chunk_end)}"
+                )
+
+                worker = type(self)(
+                    ts_start=current,
+                    ts_end=chunk_end
+                    - 1,  # remove one second because BGPKIT include border
+                    collector_id=self.collector_id,
+                    data_type=self.data_type,
+                    cache_dir=self.cache_dir,
+                    filters=self.filters,
+                    max_concurrent_downloads=self.max_concurrent_downloads,
+                    chunk_time=None,  # Worker doesn't chunk itself
+                )
+
+                yield from worker
+                current = chunk_end + 1e-7
+
+            return
+
         self._set_urls()
 
         if self.cache_dir:
@@ -229,4 +260,5 @@ class BGPKITStream:
             max_concurrent_downloads=config.max_concurrent_downloads
             if config.max_concurrent_downloads
             else 10,
+            chunk_time=config.chunk_time.seconds if config.chunk_time else None,
         )
