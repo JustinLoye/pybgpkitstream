@@ -9,6 +9,7 @@ from heapq import merge
 from operator import itemgetter
 import binascii
 import logging
+from tempfile import TemporaryDirectory
 
 import aiohttp
 import bgpkit
@@ -44,6 +45,17 @@ def crc32(input_str: str):
     return f"{crc:08x}"
 
 
+class Directory:
+    """Permanent directory that mimics TemporaryDirectory interface."""
+
+    def __init__(self, path):
+        self.name = str(path)
+
+    def cleanup(self):
+        """No-op cleanup for permanent directories."""
+        pass
+
+
 class BGPKITStream:
     def __init__(
         self,
@@ -60,7 +72,9 @@ class BGPKITStream:
         self.ts_end = ts_end
         self.collector_id = collector_id
         self.data_type = data_type
-        self.cache_dir = cache_dir
+        self.cache_dir: Directory | TemporaryDirectory = (
+            Directory(cache_dir) if cache_dir else TemporaryDirectory()
+        )
         self.filters = filters
         self.max_concurrent_downloads = max_concurrent_downloads
         self.chunk_time = chunk_time
@@ -72,7 +86,6 @@ class BGPKITStream:
         """Generate a cache filename compatible with BGPKIT parser."""
 
         hash_suffix = crc32(url)
-        print(url)
 
         if "updates." in url:
             data_type = "updates"
@@ -142,7 +155,7 @@ class BGPKITStream:
                 for rc, rc_urls in self.urls[data_type].items():
                     for url in rc_urls:
                         filename = self._generate_cache_filename(url)
-                        filepath = os.path.join(self.cache_dir, filename)
+                        filepath = os.path.join(self.cache_dir.name, filename)
 
                         if os.path.exists(filepath):
                             logging.debug(f"{filepath} is a cache hit")
@@ -173,76 +186,79 @@ class BGPKITStream:
         return ((elem.timestamp, elem, is_rib, collector) for elem in iterator)
 
     def __iter__(self) -> Iterator[BGPElement]:
-        # Manager mode: spawn smaller worker streams to balance fetch/parse
-        if self.chunk_time:
-            current = self.ts_start
+        # try/finally to cleanup the fetching cache
+        try:
+            # Manager mode: spawn smaller worker streams to balance fetch/parse
+            if self.chunk_time:
+                current = self.ts_start
 
-            while current < self.ts_end:
-                chunk_end = min(current + self.chunk_time, self.ts_end)
+                while current < self.ts_end:
+                    chunk_end = min(current + self.chunk_time, self.ts_end)
 
-                logging.info(
-                    f"Processing chunk: {datetime.datetime.fromtimestamp(current)} "
-                    f"to {datetime.datetime.fromtimestamp(chunk_end)}"
-                )
+                    logging.info(
+                        f"Processing chunk: {datetime.datetime.fromtimestamp(current)} "
+                        f"to {datetime.datetime.fromtimestamp(chunk_end)}"
+                    )
 
-                worker = type(self)(
-                    ts_start=current,
-                    ts_end=chunk_end
-                    - 1,  # remove one second because BGPKIT include border
-                    collector_id=self.collector_id,
-                    data_type=self.data_type,
-                    cache_dir=self.cache_dir,
-                    filters=self.filters,
-                    max_concurrent_downloads=self.max_concurrent_downloads,
-                    chunk_time=None,  # Worker doesn't chunk itself
-                )
+                    worker = type(self)(
+                        ts_start=current,
+                        ts_end=chunk_end
+                        - 1,  # remove one second because BGPKIT include border
+                        collector_id=self.collector_id,
+                        data_type=self.data_type,
+                        cache_dir=None,
+                        filters=self.filters,
+                        max_concurrent_downloads=self.max_concurrent_downloads,
+                        chunk_time=None,  # Worker doesn't chunk itself
+                    )
 
-                yield from worker
-                current = chunk_end + 1e-7
+                    yield from worker
+                    current = chunk_end + 1e-7
 
-            return
+                return
 
-        self._set_urls()
+            self._set_urls()
 
-        if self.cache_dir:
             asyncio.run(self._prefetch_data())
 
-        # One iterator for each data_type * collector combinations
-        # To be merged according to the elements timestamp
-        iterators_to_merge = []
+            # One iterator for each data_type * collector combinations
+            # To be merged according to the elements timestamp
+            iterators_to_merge = []
 
-        for data_type in self.data_type:
-            is_rib = data_type == "rib"
+            for data_type in self.data_type:
+                is_rib = data_type == "rib"
 
-            # Get rib or update files per collector
-            if self.cache_dir:
-                rc_to_urls = self.paths[data_type]
-            else:
-                rc_to_urls = self.urls[data_type]
+                # Get rib or update files per collector
+                rc_to_paths = self.paths[data_type]
 
-            # Chain rib or update iterators to get one stream per collector / data_type
-            for rc, urls in rc_to_urls.items():
-                parsers = [bgpkit.Parser(url=url, filters=self.filters) for url in urls]
+                # Chain rib or update iterators to get one stream per collector / data_type
+                for rc, paths in rc_to_paths.items():
+                    parsers = [
+                        bgpkit.Parser(url=path, filters=self.filters) for path in paths
+                    ]
 
-                chained_iterator = chain.from_iterable(parsers)
+                    chained_iterator = chain.from_iterable(parsers)
 
-                # Add metadata lost by bgpkit for compatibility with pubgpstream
-                iterators_to_merge.append((chained_iterator, is_rib, rc))
+                    # Add metadata lost by bgpkit for compatibility with pubgpstream
+                    iterators_to_merge.append((chained_iterator, is_rib, rc))
 
-        # Make a generator to tag each bgpkit element with metadata
-        # Benefit 1: full compat with pybgpstream
-        # Benefit 2: we give a key easy to access for heapq to merge
-        tagged_iterators = [
-            self._create_tagged_iterator(it, is_rib, rc)
-            for it, is_rib, rc in iterators_to_merge
-        ]
+            # Make a generator to tag each bgpkit element with metadata
+            # Benefit 1: full compat with pybgpstream
+            # Benefit 2: we give a key easy to access for heapq to merge
+            tagged_iterators = [
+                self._create_tagged_iterator(it, is_rib, rc)
+                for it, is_rib, rc in iterators_to_merge
+            ]
 
-        # Merge and convert to pybgpstream format
-        for timestamp, bgpkit_elem, is_rib, rc in merge(
-            *tagged_iterators, key=itemgetter(0)
-        ):
-            if self.ts_start <= timestamp <= self.ts_end:
-                yield convert_bgpkit_elem(bgpkit_elem, is_rib, rc)
+            # Merge and convert to pybgpstream format
+            for timestamp, bgpkit_elem, is_rib, rc in merge(
+                *tagged_iterators, key=itemgetter(0)
+            ):
+                if self.ts_start <= timestamp <= self.ts_end:
+                    yield convert_bgpkit_elem(bgpkit_elem, is_rib, rc)
+
+        finally:
+            self.cache_dir.cleanup()
 
     @classmethod
     def from_config(cls, config: BGPStreamConfig):
