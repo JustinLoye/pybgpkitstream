@@ -116,9 +116,8 @@ class BGPKITStream:
         self.urls = {"rib": defaultdict(list), "update": defaultdict(list)}
         for data_type in self.data_type:
             items: list[BrokerItem] = self.broker.query(
-                ts_start=datetime.datetime.fromtimestamp(self.ts_start)
-                - datetime.timedelta(minutes=1),
-                ts_end=datetime.datetime.fromtimestamp(self.ts_end),
+                ts_start=int(self.ts_start - 60),
+                ts_end=int(self.ts_end),
                 collector_id=self.collector_id,
                 data_type=data_type,
             )

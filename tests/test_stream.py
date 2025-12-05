@@ -109,6 +109,22 @@ def test_pybgpkitstream_with_chunk(
     ) == validate_stream(pybgpstream_stream_with_chunk, config_with_chunk)
 
 
+def test_pybgpkitstream_with_tz(pybgpkit_stream, config):
+    """Test if the stream is consistent when changing the timezone"""
+    import os
+    import time
+
+    os.environ["TZ"] = "UTC"
+    time.tzset()
+    utc_elems = validate_stream(pybgpkit_stream, config)
+
+    os.environ["TZ"] = "Asia/Tokyo"
+    time.tzset()
+    tokyo_elems = validate_stream(pybgpkit_stream, config)
+
+    assert utc_elems == tokyo_elems
+
+
 def validate_stream(
     stream: BGPKITStream | pybgpstream.BGPStream, config: BGPStreamConfig
 ):

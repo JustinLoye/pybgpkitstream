@@ -1,5 +1,5 @@
 import datetime
-from pydantic import BaseModel, Field, DirectoryPath
+from pydantic import BaseModel, Field, DirectoryPath, field_validator
 from typing import Literal
 from ipaddress import IPv4Address, IPv6Address
 
@@ -70,3 +70,13 @@ class BGPStreamConfig(BaseModel):
         default=datetime.timedelta(hours=2),
         description="Interval for the fetch/parse cycle (avoid long prefetch time)",
     )
+
+    @field_validator("start_time", "end_time")
+    @classmethod
+    def normalize_to_utc(cls, dt: datetime.datetime) -> datetime.datetime:
+        # if naive datetime (not timezone-aware) assume it's UTC
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=datetime.timezone.utc)
+        # if timezone-aware, convert to utc
+        else:
+            return dt.astimezone(datetime.timezone.utc)
