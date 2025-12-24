@@ -56,6 +56,15 @@ class Directory:
         pass
 
 
+def get_shared_memory():
+    """Get a RAM-based temp path if available, otherwise fall back to default."""
+    if os.path.exists("/dev/shm"):  # Linux tmpfs
+        return "/dev/shm"
+    elif os.path.exists("/Volumes/RAMDisk"):  # macOS (if mounted)
+        return "/Volumes/RAMDisk"
+    return None  # Fall back to default temp directory
+
+
 class BGPKITStream:
     def __init__(
         self,
@@ -73,7 +82,9 @@ class BGPKITStream:
         self.collector_id = collector_id
         self.data_type = data_type
         self.cache_dir: Directory | TemporaryDirectory = (
-            Directory(cache_dir) if cache_dir else TemporaryDirectory()
+            Directory(cache_dir)
+            if cache_dir
+            else TemporaryDirectory(dir=get_shared_memory())
         )
         self.filters = filters
         self.max_concurrent_downloads = max_concurrent_downloads
