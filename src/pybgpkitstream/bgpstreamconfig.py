@@ -31,7 +31,7 @@ class FilterOptions(BaseModel):
     peer_ips: list[str | IPv4Address | IPv6Address] | None = Field(
         default=None, description="Filter by a list of BGP peer IP addresses."
     )
-    peer_asn: str | None = Field(
+    peer_asn: int | None = Field(
         default=None, description="Filter by the AS number of the BGP peer."
     )
     update_type: Literal["withdraw", "announce"] | None = Field(
@@ -40,16 +40,14 @@ class FilterOptions(BaseModel):
     as_path: str | None = Field(
         default=None, description="Filter by a regular expression matching the AS path."
     )
-    ip_version: Literal["ipv4", "ipv6"] | None = Field(
+    ip_version: Literal[4, 6] | None = Field(
         default=None, description="Filter by ip version."
     )
 
 
 class BGPStreamConfig(BaseModel):
     """
-    Unified BGPStream config.
-
-    Filters are primarily written for BGPKit but utils to convert to pybgpstream are provided in tests/pybgpstream_utils.
+    Unified BGPStream config, compatible with BGPKIT and pybgpstream
     """
 
     start_time: datetime.datetime = Field(description="Start of the stream")
@@ -58,18 +56,8 @@ class BGPStreamConfig(BaseModel):
     data_types: list[Literal["ribs", "updates"]] = Field(
         description="List of archives files to consider (`ribs` or `updates`)"
     )
-    cache_dir: DirectoryPath | None = Field(
-        default=None,
-        description="Specifies the directory for caching downloaded files.",
-    )
+
     filters: FilterOptions | None = Field(default=None, description="Optional filters")
-    max_concurrent_downloads: int | None = Field(
-        default=None, description="Maximum concurrent downloads when caching"
-    )
-    chunk_time: datetime.timedelta | None = Field(
-        default=datetime.timedelta(hours=2),
-        description="Interval for the fetch/parse cycle (avoid long prefetch time)",
-    )
 
     @field_validator("start_time", "end_time")
     @classmethod
@@ -80,3 +68,44 @@ class BGPStreamConfig(BaseModel):
         # if timezone-aware, convert to utc
         else:
             return dt.astimezone(datetime.timezone.utc)
+
+
+AVAILABLE_PARSERS = Literal["pybgpkit", "bgpkit", "pybgpstream", "bgpdump"]
+
+
+class PyBGPKITStreamConfig(BaseModel):
+    """Unified BGPStream config and parameters related to PyBGPKIT implementation (optional)"""
+
+    bgpstream_config: BGPStreamConfig
+
+    max_concurrent_downloads: int | None = Field(
+        default=10, description="Maximum concurrent downloads of archive files."
+    )
+
+    cache_dir: DirectoryPath | None = Field(
+        default=None,
+        description="Specifies the directory for caching downloaded files.",
+    )
+
+    ram_fetch: bool | None = Field(
+        default=True,
+        description=(
+            "If caching is disabled, fetch temp files in shared RAM memory (/dev/shml) or normal disc temp dir (/tmp)."
+            "Default (True) improve perfomance and reduce disk wear, at the expense of increased RAM usage."
+        ),
+    )
+
+    chunk_time: datetime.timedelta | None = Field(
+        default=datetime.timedelta(hours=2),
+        description=(
+            "Interval for the fetch/parse cycles (benefits: avoid long prefetch time + periodic temps cleanup when caching is disabled)."
+            "Slower value means less RAM/disk used at the cost of performance."
+        ),
+    )
+
+    parser: AVAILABLE_PARSERS = Field(
+        default="pybgpkit",
+        description=(
+            "MRT files parser. Default `pybgpkit` is installed but slow, the others are system dependencies."
+        ),
+    )

@@ -6,7 +6,7 @@ from typing import Iterator, Literal
 from collections import defaultdict
 from itertools import chain
 from heapq import merge
-from operator import itemgetter
+from operator import attrgetter
 import binascii
 import logging
 from tempfile import TemporaryDirectory
@@ -15,8 +15,27 @@ import aiohttp
 import bgpkit
 from bgpkit.bgpkit_broker import BrokerItem
 
-from pybgpkitstream.bgpstreamconfig import BGPStreamConfig
+from pybgpkitstream.bgpstreamconfig import (
+    BGPStreamConfig,
+    FilterOptions,
+    PyBGPKITStreamConfig,
+    AVAILABLE_PARSERS,
+)
 from pybgpkitstream.bgpelement import BGPElement
+from pybgpkitstream.bgpparser import (
+    BGPParser,
+    PyBGPKITParser,
+    BGPKITParser,
+    PyBGPStreamParser,
+    BGPdumpParser,
+)
+
+name2parser = {
+    "pybgpkit": PyBGPKITParser,
+    "bgpkit": BGPKITParser,
+    "pybgpstream": PyBGPStreamParser,
+    "bgpdump": BGPdumpParser,
+}
 
 
 logger = logging.getLogger(__name__)
@@ -72,25 +91,40 @@ class BGPKITStream:
         ts_end: float,
         collector_id: str,
         data_type: list[Literal["update", "rib"]],
-        cache_dir: str | None,
-        filters: dict = {},
-        max_concurrent_downloads: int = 10,
+        filters: FilterOptions | None,
+        cache_dir: str | None = None,
+        max_concurrent_downloads: int | None = 10,
         chunk_time: float | None = datetime.timedelta(hours=2).seconds,
+        ram_fetch: bool | None = True,
+        parser_name: AVAILABLE_PARSERS | None = "pybgpkit",
     ):
+        # Stream config
         self.ts_start = ts_start
         self.ts_end = ts_end
         self.collector_id = collector_id
         self.data_type = data_type
-        self.cache_dir: Directory | TemporaryDirectory = (
-            Directory(cache_dir)
-            if cache_dir
-            else TemporaryDirectory(dir=get_shared_memory())
-        )
+        if not filters:
+            filters = FilterOptions()
         self.filters = filters
+
+        # Implementation config
         self.max_concurrent_downloads = max_concurrent_downloads
         self.chunk_time = chunk_time
+        self.ram_fetch = ram_fetch
+        if cache_dir:
+            self.cache_dir = Directory(cache_dir)
+        else:
+            if ram_fetch:
+                self.cache_dir = TemporaryDirectory(dir=get_shared_memory())
+            else:
+                self.cache_dir = TemporaryDirectory()
+        if not parser_name:
+            self.parser_name = "pybgpkit"
+        else:
+            self.parser_name = parser_name
 
         self.broker = bgpkit.Broker()
+        self.parser_cls: BGPParser = name2parser[parser_name]
 
     @staticmethod
     def _generate_cache_filename(url):
@@ -209,17 +243,20 @@ class BGPKITStream:
                         f"Processing chunk: {datetime.datetime.fromtimestamp(current)} "
                         f"to {datetime.datetime.fromtimestamp(chunk_end)}"
                     )
-
                     worker = type(self)(
                         ts_start=current,
                         ts_end=chunk_end
                         - 1,  # remove one second because BGPKIT include border
                         collector_id=self.collector_id,
                         data_type=self.data_type,
-                        cache_dir=None,
+                        cache_dir=self.cache_dir.name
+                        if isinstance(self.cache_dir, Directory)
+                        else None,
                         filters=self.filters,
                         max_concurrent_downloads=self.max_concurrent_downloads,
                         chunk_time=None,  # Worker doesn't chunk itself
+                        ram_fetch=self.ram_fetch,
+                        parser_name=self.parser_name,
                     )
 
                     yield from worker
@@ -228,7 +265,6 @@ class BGPKITStream:
                 return
 
             self._set_urls()
-
             asyncio.run(self._prefetch_data())
 
             # One iterator for each data_type * collector combinations
@@ -243,48 +279,51 @@ class BGPKITStream:
 
                 # Chain rib or update iterators to get one stream per collector / data_type
                 for rc, paths in rc_to_paths.items():
+                    # Don't use a generator here. parsers are lazy anyway
                     parsers = [
-                        bgpkit.Parser(url=path, filters=self.filters) for path in paths
+                        self.parser_cls(path, is_rib, rc, filters=self.filters)
+                        for path in paths
                     ]
 
                     chained_iterator = chain.from_iterable(parsers)
 
                     # Add metadata lost by bgpkit for compatibility with pubgpstream
-                    iterators_to_merge.append((chained_iterator, is_rib, rc))
+                    # iterators_to_merge.append((chained_iterator, is_rib, rc))
+                    iterators_to_merge.append(chained_iterator)
 
-            # Make a generator to tag each bgpkit element with metadata
-            # Benefit 1: full compat with pybgpstream
-            # Benefit 2: we give a key easy to access for heapq to merge
-            tagged_iterators = [
-                self._create_tagged_iterator(it, is_rib, rc)
-                for it, is_rib, rc in iterators_to_merge
-            ]
-
-            # Merge and convert to pybgpstream format
-            for timestamp, bgpkit_elem, is_rib, rc in merge(
-                *tagged_iterators, key=itemgetter(0)
-            ):
-                if self.ts_start <= timestamp <= self.ts_end:
-                    yield convert_bgpkit_elem(bgpkit_elem, is_rib, rc)
-
+            for bgpelem in merge(*iterators_to_merge, key=attrgetter("time")):
+                if self.ts_start <= bgpelem.time <= self.ts_end:
+                    yield bgpelem
         finally:
             self.cache_dir.cleanup()
 
     @classmethod
-    def from_config(cls, config: BGPStreamConfig):
-        return cls(
-            ts_start=config.start_time.timestamp(),
-            ts_end=config.end_time.timestamp(),
-            collector_id=",".join(config.collectors),
-            data_type=[
-                dtype[:-1] for dtype in config.data_types
-            ],  # removes plural form
-            cache_dir=str(config.cache_dir) if config.cache_dir else None,
-            filters=config.filters.model_dump(exclude_unset=True)
-            if config.filters
-            else {},
-            max_concurrent_downloads=config.max_concurrent_downloads
-            if config.max_concurrent_downloads
-            else 10,
-            chunk_time=config.chunk_time.seconds if config.chunk_time else None,
-        )
+    def from_config(cls, config: PyBGPKITStreamConfig | BGPStreamConfig):
+        
+        if isinstance(config, PyBGPKITStreamConfig):
+            stream_config = config.bgpstream_config
+            return cls(
+                ts_start=stream_config.start_time.timestamp(),
+                ts_end=stream_config.end_time.timestamp(),
+                collector_id=",".join(stream_config.collectors),
+                data_type=[dtype[:-1] for dtype in stream_config.data_types],
+                filters=stream_config.filters
+                if stream_config.filters
+                else FilterOptions(),
+                cache_dir=str(config.cache_dir) if config.cache_dir else None,
+                max_concurrent_downloads=config.max_concurrent_downloads
+                if config.max_concurrent_downloads
+                else 10,
+                chunk_time=config.chunk_time.seconds if config.chunk_time else None,
+                ram_fetch=config.ram_fetch if config.ram_fetch else None,
+                parser_name=config.parser if config.parser else "pybgpkit",
+            )
+            
+        elif isinstance(config, BGPStreamConfig):
+            return cls(
+                ts_start=config.start_time.timestamp(),
+                ts_end=config.end_time.timestamp(),
+                collector_id=",".join(config.collectors),
+                data_type=[dtype[:-1] for dtype in config.data_types],
+                filters=config.filters if config.filters else FilterOptions(),
+            )

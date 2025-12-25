@@ -1,51 +1,56 @@
 import pytest
 import datetime
-import tempfile
 from itertools import pairwise
-from pybgpkitstream import BGPKITStream, BGPStreamConfig
+from pybgpkitstream import BGPKITStream, BGPStreamConfig, PyBGPKITStreamConfig
 import pybgpstream
 from tests.pybgpstream_utils import make_bgpstream
 
 
 @pytest.fixture
 def config():
-    return BGPStreamConfig(
-        start_time=datetime.datetime(2010, 9, 1, 0, 0),
-        end_time=datetime.datetime(2010, 9, 1, 1, 59),
-        collectors=["route-views.sydney", "route-views.wide"],
-        data_types=["updates"],
+    return PyBGPKITStreamConfig(
+        bgpstream_config=BGPStreamConfig(
+            start_time=datetime.datetime(2010, 9, 1, 0, 0),
+            end_time=datetime.datetime(2010, 9, 1, 1, 59),
+            collectors=["route-views.sydney", "route-views.wide"],
+            data_types=["updates"],
+        )
     )
 
 
 @pytest.fixture
 def config_with_cache():
     """Configuration with a temporary cache directory."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        cache_config = BGPStreamConfig(
-            start_time=datetime.datetime(2010, 9, 1, 0, 0),
-            end_time=datetime.datetime(2010, 9, 1, 1, 59),
-            collectors=["route-views.sydney", "route-views.wide"],
-            data_types=["updates"],
-            cache_dir=tmpdir,
-            max_concurrent_downloads=8,
-        )
-        yield cache_config
+    stream_config = BGPStreamConfig(
+        start_time=datetime.datetime(2010, 9, 1, 0, 0),
+        end_time=datetime.datetime(2010, 9, 1, 1, 59),
+        collectors=["route-views.sydney", "route-views.wide"],
+        data_types=["updates"],
+    )
+    cache_config = PyBGPKITStreamConfig(
+        bgpstream_config=stream_config,
+        cache_dir="cache",
+        max_concurrent_downloads=8,
+    )
+    yield cache_config
 
 
 @pytest.fixture
 def config_with_chunk():
     """Configuration with a chunking mechanism to balance fetch/parse."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        chunk_config = BGPStreamConfig(
-            start_time=datetime.datetime(2010, 9, 1, 0, 0),
-            end_time=datetime.datetime(2010, 9, 1, 1, 59),
-            collectors=["route-views.sydney", "route-views.wide"],
-            data_types=["updates"],
-            cache_dir=tmpdir,
-            max_concurrent_downloads=8,
-            chunk_time=datetime.timedelta(minutes=15),
-        )
-        yield chunk_config
+    stream_config = BGPStreamConfig(
+        start_time=datetime.datetime(2010, 9, 1, 0, 0),
+        end_time=datetime.datetime(2010, 9, 1, 1, 59),
+        collectors=["route-views.sydney", "route-views.wide"],
+        data_types=["updates"],
+    )
+    chunk_config = PyBGPKITStreamConfig(
+        bgpstream_config=stream_config,
+        cache_dir="cache",
+        max_concurrent_downloads=8,
+        chunk_time=datetime.timedelta(minutes=15),
+    )
+    yield chunk_config
 
 
 @pytest.fixture
@@ -86,8 +91,8 @@ def pybgpstream_stream_with_chunk(config_with_chunk):
 
 def test_pybgpkitstream(pybgpkit_stream, pybgpstream_stream, config):
     """Test if the streamw are consistent and if they return the same number of elements"""
-    assert validate_stream(pybgpkit_stream, config) == validate_stream(
-        pybgpstream_stream, config
+    assert validate_stream(pybgpkit_stream, config.bgpstream_config) == validate_stream(
+        pybgpstream_stream, config.bgpstream_config
     )
 
 
@@ -96,8 +101,10 @@ def test_pybgpkitstream_with_cache(
 ):
     """Test if the streams are consistent and if they return the same number of elements (WITH CACHE)"""
     assert validate_stream(
-        pybgpkit_stream_with_cache, config_with_cache
-    ) == validate_stream(pybgpstream_stream_with_cache, config_with_cache)
+        pybgpkit_stream_with_cache, config_with_cache.bgpstream_config
+    ) == validate_stream(
+        pybgpstream_stream_with_cache, config_with_cache.bgpstream_config
+    )
 
 
 def test_pybgpkitstream_with_chunk(
@@ -105,8 +112,10 @@ def test_pybgpkitstream_with_chunk(
 ):
     """Test if the streams are consistent and if they return the same number of elements (WITH CACHE)"""
     assert validate_stream(
-        pybgpkit_stream_with_chunk, config_with_chunk
-    ) == validate_stream(pybgpstream_stream_with_chunk, config_with_chunk)
+        pybgpkit_stream_with_chunk, config_with_chunk.bgpstream_config
+    ) == validate_stream(
+        pybgpstream_stream_with_chunk, config_with_chunk.bgpstream_config
+    )
 
 
 def test_pybgpkitstream_with_tz(pybgpkit_stream, config):
@@ -116,11 +125,11 @@ def test_pybgpkitstream_with_tz(pybgpkit_stream, config):
 
     os.environ["TZ"] = "UTC"
     time.tzset()
-    utc_elems = validate_stream(pybgpkit_stream, config)
+    utc_elems = validate_stream(pybgpkit_stream, config.bgpstream_config)
 
     os.environ["TZ"] = "Asia/Tokyo"
     time.tzset()
-    tokyo_elems = validate_stream(pybgpkit_stream, config)
+    tokyo_elems = validate_stream(pybgpkit_stream, config.bgpstream_config)
 
     assert utc_elems == tokyo_elems
 
