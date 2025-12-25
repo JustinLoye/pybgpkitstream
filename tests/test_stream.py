@@ -4,7 +4,10 @@ from itertools import pairwise
 from pybgpkitstream import BGPKITStream, BGPStreamConfig, PyBGPKITStreamConfig
 import pybgpstream
 from tests.pybgpstream_utils import make_bgpstream
+import os
 
+cache_dir = "cache"
+os.makedirs(cache_dir, exist_ok=True)
 
 @pytest.fixture
 def config():
@@ -29,7 +32,7 @@ def config_with_cache():
     )
     cache_config = PyBGPKITStreamConfig(
         bgpstream_config=stream_config,
-        cache_dir="cache",
+        cache_dir=cache_dir,
         max_concurrent_downloads=8,
     )
     yield cache_config
@@ -46,7 +49,7 @@ def config_with_chunk():
     )
     chunk_config = PyBGPKITStreamConfig(
         bgpstream_config=stream_config,
-        cache_dir="cache",
+        cache_dir=cache_dir,
         max_concurrent_downloads=8,
         chunk_time=datetime.timedelta(minutes=15),
     )
