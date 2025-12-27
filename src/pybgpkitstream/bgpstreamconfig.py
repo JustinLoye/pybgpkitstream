@@ -1,4 +1,6 @@
 import datetime
+import importlib
+import shutil
 from pydantic import BaseModel, Field, DirectoryPath, field_validator
 from typing import Literal
 from ipaddress import IPv4Address, IPv6Address
@@ -46,9 +48,7 @@ class FilterOptions(BaseModel):
 
 
 class BGPStreamConfig(BaseModel):
-    """
-    Unified BGPStream config, compatible with BGPKIT and pybgpstream
-    """
+    """Unified BGPStream config, compatible with BGPKIT and pybgpstream"""
 
     start_time: datetime.datetime = Field(description="Start of the stream")
     end_time: datetime.datetime = Field(description="End of the stream")
@@ -70,11 +70,8 @@ class BGPStreamConfig(BaseModel):
             return dt.astimezone(datetime.timezone.utc)
 
 
-AVAILABLE_PARSERS = Literal["pybgpkit", "bgpkit", "pybgpstream", "bgpdump"]
-
-
 class PyBGPKITStreamConfig(BaseModel):
-    """Unified BGPStream config and parameters related to PyBGPKIT implementation (optional)"""
+    """Unified BGPStream config and parameters related to PyBGPKIT implementation (all optional)"""
 
     bgpstream_config: BGPStreamConfig
 
@@ -103,9 +100,43 @@ class PyBGPKITStreamConfig(BaseModel):
         ),
     )
 
-    parser: AVAILABLE_PARSERS = Field(
+    parser: Literal["pybgpkit", "bgpkit", "pybgpstream", "bgpdump"] = Field(
         default="pybgpkit",
         description=(
             "MRT files parser. Default `pybgpkit` is installed but slow, the others are system dependencies."
         ),
     )
+
+    @field_validator("parser")
+    @classmethod
+    def check_parser_available(cls, parser: str) -> str:
+        if parser == "pybgpkit":
+            if importlib.util.find_spec("bgpkit") is None:
+                raise ValueError(
+                    "pybgpkit is not installed. Install with: pip install pybgpkit"
+                )
+
+        elif parser == "pybgpstream":
+            if importlib.util.find_spec("pybgpstream") is None:
+                raise ValueError(
+                    "pybgpstream is not installed. "
+                    "Install with: pip install pybgpstream (ensure system dependencies are met)"
+                )
+
+        elif parser == "bgpdump":
+            if shutil.which("bgpdump") is None:
+                raise ValueError(
+                    "bgpdump binary not found in PATH. "
+                    "Install with: sudo apt-get install bgpdump"
+                )
+
+        elif parser == "bgpkit":
+            if shutil.which("bgpkit") is None:
+                raise ValueError(
+                    "bgpkit binary not found in PATH. "
+                    "Install from: https://github.com/bgpkit/bgpkit-parser "
+                    "or use cargo: cargo install bgpkit-parser"
+                )
+
+        # Return the parser value if validation passes
+        return parser

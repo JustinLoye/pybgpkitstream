@@ -6,7 +6,7 @@ from typing import Iterator, Literal
 from collections import defaultdict
 from itertools import chain
 from heapq import merge
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 import binascii
 import logging
 from tempfile import TemporaryDirectory
@@ -19,7 +19,6 @@ from pybgpkitstream.bgpstreamconfig import (
     BGPStreamConfig,
     FilterOptions,
     PyBGPKITStreamConfig,
-    AVAILABLE_PARSERS,
 )
 from pybgpkitstream.bgpelement import BGPElement
 from pybgpkitstream.bgpparser import (
@@ -29,6 +28,7 @@ from pybgpkitstream.bgpparser import (
     PyBGPStreamParser,
     BGPdumpParser,
 )
+from pybgpkitstream.utils import dt_from_filepath
 
 name2parser = {
     "pybgpkit": PyBGPKITParser,
@@ -96,7 +96,7 @@ class BGPKITStream:
         max_concurrent_downloads: int | None = 10,
         chunk_time: float | None = datetime.timedelta(hours=2).seconds,
         ram_fetch: bool | None = True,
-        parser_name: AVAILABLE_PARSERS | None = "pybgpkit",
+        parser_name: str | None = "pybgpkit",
     ):
         # Stream config
         self.ts_start = ts_start
@@ -225,11 +225,14 @@ class BGPKITStream:
                         self.paths[data_type][rc].append(filepath)
                 logging.info("All downloads finished.")
 
-    def _create_tagged_iterator(self, iterator, is_rib, collector):
-        """Creates a generator that tags elements with metadata missing in bgpkit."""
-        return ((elem.timestamp, elem, is_rib, collector) for elem in iterator)
+    def __iter__(self):
+        if "update" in self.data_type:
+            return self._iter_update()
+        else:
+            return self._iter_rib()
 
-    def __iter__(self) -> Iterator[BGPElement]:
+    def _iter_update(self) -> Iterator[BGPElement]:
+        # __iter__ for data types [ribs, updates] or [updates]
         # try/finally to cleanup the fetching cache
         try:
             # Manager mode: spawn smaller worker streams to balance fetch/parse
@@ -297,9 +300,73 @@ class BGPKITStream:
         finally:
             self.cache_dir.cleanup()
 
+    def _iter_rib(self) -> Iterator[BGPElement]:
+        # __iter__ for data types [ribs]
+        # try/finally to cleanup the fetching cache
+        try:
+            # Manager mode: spawn smaller worker streams to balance fetch/parse
+            if self.chunk_time:
+                current = self.ts_start
+
+                while current < self.ts_end:
+                    chunk_end = min(current + self.chunk_time, self.ts_end)
+
+                    logging.info(
+                        f"Processing chunk: {datetime.datetime.fromtimestamp(current)} "
+                        f"to {datetime.datetime.fromtimestamp(chunk_end)}"
+                    )
+                    worker = type(self)(
+                        ts_start=current,
+                        ts_end=chunk_end
+                        - 1,  # remove one second because BGPKIT include border
+                        collector_id=self.collector_id,
+                        data_type=self.data_type,
+                        cache_dir=self.cache_dir.name
+                        if isinstance(self.cache_dir, Directory)
+                        else None,
+                        filters=self.filters,
+                        max_concurrent_downloads=self.max_concurrent_downloads,
+                        chunk_time=None,  # Worker doesn't chunk itself
+                        ram_fetch=self.ram_fetch,
+                        parser_name=self.parser_name,
+                    )
+
+                    yield from worker
+                    current = chunk_end + 1e-7
+
+                return
+
+            self._set_urls()
+            asyncio.run(self._prefetch_data())
+
+            rc_to_paths = self.paths["rib"]
+
+            # Agglomerate all RIBs parsers for ordering
+            iterators_to_order = []
+            for rc, paths in rc_to_paths.items():
+                # Don't use a generator here. parsers are lazy anyway
+                parsers = [
+                    (
+                        dt_from_filepath(path),
+                        rc,
+                        self.parser_cls(path, True, rc, filters=self.filters),
+                    )
+                    for path in paths
+                ]
+                iterators_to_order.extend(parsers)
+
+            iterators_to_order.sort(key=itemgetter(0, 1))
+
+            for bgpelem in chain.from_iterable(
+                (iterator[2] for iterator in iterators_to_order)
+            ):
+                if self.ts_start <= bgpelem.time <= self.ts_end:
+                    yield bgpelem
+        finally:
+            self.cache_dir.cleanup()
+
     @classmethod
     def from_config(cls, config: PyBGPKITStreamConfig | BGPStreamConfig):
-        
         if isinstance(config, PyBGPKITStreamConfig):
             stream_config = config.bgpstream_config
             return cls(
@@ -318,7 +385,7 @@ class BGPKITStream:
                 ram_fetch=config.ram_fetch if config.ram_fetch else None,
                 parser_name=config.parser if config.parser else "pybgpkit",
             )
-            
+
         elif isinstance(config, BGPStreamConfig):
             return cls(
                 ts_start=config.start_time.timestamp(),

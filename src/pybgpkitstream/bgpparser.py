@@ -1,26 +1,30 @@
 import bgpkit
-import pybgpstream
 from pybgpkitstream.bgpstreamconfig import FilterOptions
 from pybgpkitstream.bgpelement import BGPElement
 from typing import Iterator, Protocol
 import re
 import ipaddress
 import subprocess as sp
-import datetime
+from pybgpkitstream.utils import dt_from_filepath
+
+try:
+    import pybgpstream
+except ImportError:
+    pass
 
 
 class BGPParser(Protocol):
     filepath: str
+    is_rib: bool
     collector: str
-    parser: str
     filters: FilterOptions
 
     def __iter__(self) -> Iterator[BGPElement]: ...
-    def is_available(self) -> bool: ...
 
 
 class PyBGPKITParser(BGPParser):
-    """Use BGPKIT python bindings (default parser). Slower than other alternatives but easier to ship (no system dependencies)."""
+    """Use BGPKIT Python bindings (default parser). Slower than other alternatives but easier to ship (no system dependencies)."""
+
     def __init__(
         self,
         filepath: str,
@@ -59,12 +63,10 @@ class PyBGPKITParser(BGPParser):
         for elem in parser:
             yield self._convert(elem)
 
-    def is_available():
-        return True
-
 
 class BGPKITParser(BGPParser):
     """Run BGPKIT's CLI `bgpkit-parser` as a subprocess."""
+
     def __init__(
         self,
         filepath: str,
@@ -78,16 +80,8 @@ class BGPKITParser(BGPParser):
         self.collector = collector
         self.filters = filters
 
-        # Set timestamp for same behavior as bgpdump default (timestamp match rib time, not last change)
-        # Regex to find 8 digits, a dot, and 4 digits (YYYYMMDD.HHMM)
-        pattern = r"(\d{8}\.\d{4})"
-        match = re.search(pattern, self.filepath)
-        if not match:
-            raise RuntimeError("Could not determine time from filepath")
-        timestamp_str = match.group(1)
-        dt = datetime.datetime.strptime(timestamp_str, "%Y%m%d.%H%M")
-        dt = dt.replace(tzinfo=datetime.timezone.utc)
-        self.time = int(dt.timestamp())
+        # Set timestamp for the same behavior as bgpdump default (timestamp match rib time, not last change)
+        self.time = int(dt_from_filepath(self.filepath).timestamp())
 
     def __iter__(self):
         cmd = build_bgpkit_cmd(self.filepath, self.filters)
@@ -113,7 +107,7 @@ class BGPKITParser(BGPParser):
             return BGPElement(
                 type="W",
                 collector=self.collector,
-                time=self.time, # force RIB filename timestamp instead of last changed
+                time=self.time,  # force RIB filename timestamp instead of last changed
                 peer_asn=int(element[3]),
                 peer_address=element[2],
                 fields={"prefix": element[4]},
@@ -148,6 +142,7 @@ class BGPKITParser(BGPParser):
 
 class PyBGPStreamParser(BGPParser):
     """Use pybgpstream as a MRT parser with the `singlefile` data interface"""
+
     def __init__(
         self,
         filepath: str,

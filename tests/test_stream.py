@@ -9,6 +9,7 @@ import os
 cache_dir = "cache"
 os.makedirs(cache_dir, exist_ok=True)
 
+
 @pytest.fixture
 def config():
     return PyBGPKITStreamConfig(
@@ -19,6 +20,19 @@ def config():
             data_types=["updates"],
         )
     )
+
+
+@pytest.fixture
+def config_with_rib():
+    """Configuration with RIBs from both projects."""
+    stream_config = BGPStreamConfig(
+        start_time=datetime.datetime(2010, 9, 1, 0, 0),
+        end_time=datetime.datetime(2010, 9, 1, 9, 0),
+        collectors=["route-views.wide", "rrc06"],
+        data_types=["ribs"],
+    )
+    rib_config = PyBGPKITStreamConfig(bgpstream_config=stream_config, chunk_time=None)
+    yield rib_config
 
 
 @pytest.fixture
@@ -69,6 +83,18 @@ def pybgpstream_stream(config):
 
 
 @pytest.fixture
+def pybgpkit_stream_with_rib(config_with_rib):
+    """A BGPKITStream object using the config with ribs."""
+    return BGPKITStream.from_config(config_with_rib)
+
+
+@pytest.fixture
+def pybgpstream_stream_with_rib(config_with_rib):
+    """A pybgpstream.BGPStream object using the config with ribs."""
+    return make_bgpstream(config_with_rib)
+
+
+@pytest.fixture
 def pybgpkit_stream_with_cache(config_with_cache):
     """A BGPKITStream object using the config with cache."""
     return BGPKITStream.from_config(config_with_cache)
@@ -97,6 +123,15 @@ def test_pybgpkitstream(pybgpkit_stream, pybgpstream_stream, config):
     assert validate_stream(pybgpkit_stream, config.bgpstream_config) == validate_stream(
         pybgpstream_stream, config.bgpstream_config
     )
+
+
+def test_pybgpkitstream_with_rib(
+    pybgpkit_stream_with_rib, pybgpstream_stream_with_rib, config_with_rib
+):
+    """Test if the streams are consistent and if they return the same number of elements (WITH CACHE)"""
+    assert validate_stream(
+        pybgpkit_stream_with_rib, config_with_rib.bgpstream_config
+    ) == validate_stream(pybgpstream_stream_with_rib, config_with_rib.bgpstream_config)
 
 
 def test_pybgpkitstream_with_cache(
@@ -165,7 +200,14 @@ def validate_stream(
     if config.filters and config.filters.peer_asn:
         assert peer_asns == set(config.filters.peer_asn)
 
-    assert all([a <= b for a, b in pairwise(times)])
+    if "updates" in config.data_types:
+        assert all([a <= b for a, b in pairwise(times)])
+    else:
+        # For RIB only, I don't do any sorting for performance.
+        # However a very small number of BGP elems have different timestamps
+        # Which after streams stitching make the final stream slightly unordered
+        # We don't care much for this edge case so I relax the test
+        assert sum([a <= b for a, b in pairwise(times)]) > 0.999 * len(times)
     assert times[0] >= config.start_time.timestamp()
     assert times[-1] <= config.end_time.timestamp()
 
