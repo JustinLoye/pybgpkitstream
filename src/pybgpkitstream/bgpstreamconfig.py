@@ -1,7 +1,7 @@
 import datetime
 import importlib
 import shutil
-from pydantic import BaseModel, Field, DirectoryPath, field_validator
+from pydantic import BaseModel, Field, DirectoryPath, field_validator, model_validator
 from typing import Literal
 from ipaddress import IPv4Address, IPv6Address
 
@@ -131,7 +131,7 @@ class PyBGPKITStreamConfig(BaseModel):
                 )
 
         elif parser == "bgpkit":
-            if shutil.which("bgpkit") is None:
+            if shutil.which("bgpkit-parser") is None:
                 raise ValueError(
                     "bgpkit binary not found in PATH. "
                     "Install from: https://github.com/bgpkit/bgpkit-parser "
@@ -140,3 +140,21 @@ class PyBGPKITStreamConfig(BaseModel):
 
         # Return the parser value if validation passes
         return parser
+    
+    @model_validator(mode='before')
+    @classmethod
+    def nest_bgpstream_params(cls, data: dict) -> dict:
+        """Allow to define a flat config"""
+        # If the user already provided 'bgpstream_config', do nothing
+        if "bgpstream_config" in data:
+            return data
+        
+        # Define which fields belong to the inner BGPStreamConfig
+        stream_fields = {"start_time", "end_time", "collectors", "data_types", "filters"}
+        
+        # Extract those fields from the flat input
+        inner_data = {k: data.pop(k) for k in stream_fields if k in data}
+        
+        # Nest them back into the dictionary
+        data["bgpstream_config"] = inner_data
+        return data
