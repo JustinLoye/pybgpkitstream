@@ -14,7 +14,7 @@ jobs:
       matrix:
         python-version:
           - "3.10"
-          - "3.14"
+          - "3.13"
 
     steps:
       - uses: actions/checkout@v5
@@ -52,7 +52,7 @@ jobs:
         run: sudo apt install -y bgpdump
 
       - name: Install bgpkit-parser CLI
-        run: cargo install bgpkit-parser
+        run: cargo install bgpkit-parser --features cli
 
       - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@v6
