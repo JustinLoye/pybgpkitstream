@@ -1,6 +1,6 @@
 [project]
 name = "pybgpkitstream"
-version = "0.2.0"
+version = "0.2.1"
 description = "Drop-in replacement for PyBGPStream using BGPKIT"
 readme = "README.md"
 authors = [
@@ -20,9 +20,15 @@ build-backend = "uv_build"
 [dependency-groups]
 test = [
     "jupyter>=1.1.1",
+    "py-radix>=1.1.0",
     "pybgpstream>=2.0.2",
     "pytest>=8.4.2",
 ]
 
 [project.scripts]
 pybgpkitstream = "pybgpkitstream.cli:main"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+addopts = "-q -rs"

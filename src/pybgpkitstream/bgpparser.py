@@ -6,6 +6,7 @@ import re
 import ipaddress
 import subprocess as sp
 from pybgpkitstream.utils import dt_from_filepath
+import logging
 
 try:
     import pybgpstream
@@ -36,12 +37,21 @@ class PyBGPKITParser(BGPParser):
         self.parser = None  # placeholder for lazy instantiation
         self.is_rib = is_rib
         self.collector = collector
-        self.filters = filters.model_dump(exclude_unset=True)
+        self.filters: dict = filters.model_dump(exclude_unset=True, exclude_none=True)
         # cast int ipv to pybgpkit ipv4 or ipv6 string
         if "ip_version" in self.filters:
             ipv_int = self.filters["ip_version"]
             if ipv_int:
                 self.filters["ip_version"] = f"ipv{ipv_int}"
+        if self.filters.get("peer_asn"):
+            self.filters["peer_asn"] = str(self.filters["peer_asn"])
+        if self.filters.get("origin_asn"):
+            self.filters["origin_asn"] = str(self.filters["origin_asn"])
+        if self.filters.get("update_type"):
+            val = self.filters.pop("update_type")
+            self.filters["type"] = val
+        if self.filters.get("peer_ips"):
+            self.filters["peer_ips"] = ", ".join(self.filters["peer_ips"])
 
     def _convert(self, element) -> BGPElement:
         return BGPElement(
@@ -154,15 +164,43 @@ class PyBGPStreamParser(BGPParser):
     ):
         self.filepath = filepath
         self.collector = collector
-        self.filters = generate_bgpstream_filters(filters) if filters else None
+        self.filters = filters
 
-    def __iter__(self):
-        stream = pybgpstream.BGPStream(data_interface="singlefile", filter=self.filters)
+    def _iter_normal(self):
+        """when there is no filter or filters are supported by pybgpstream"""
+        stream = pybgpstream.BGPStream(
+            data_interface="singlefile",
+            filter=generate_bgpstream_filters(self.filters) if self.filters else None,
+        )
         stream.set_data_interface_option("singlefile", "rib-file", self.filepath)
 
         for elem in stream:
             elem.collector = self.collector
             yield elem
+
+    def _iter_python_filter(self):
+        """when filters are not supported by pybgpstream, filter from the python side"""
+        bgpstream_filter = generate_bgpstream_filters(self.filters)
+        stream = pybgpstream.BGPStream(
+            data_interface="singlefile",
+            filter=bgpstream_filter if bgpstream_filter else None,
+        )
+        stream.set_data_interface_option("singlefile", "rib-file", self.filepath)
+        peer_ips = set(self.filters.peer_ips)
+
+        for elem in stream:
+            if elem.peer_address not in peer_ips:
+                continue
+            elem.collector = self.collector
+            yield elem
+
+    def __iter__(self):
+        if not self.filters.peer_ip and not self.filters.peer_ips:
+            return self._iter_normal()
+        else:
+            if self.filters.peer_ip:
+                self.filters.peer_ips = [self.filters.peer_ip]
+            return self._iter_python_filter()
 
 
 class BGPdumpParser(BGPParser):
@@ -362,12 +400,12 @@ def generate_bgpstream_filters(f: FilterOptions) -> str | None:
         parts.append(f"prefix any {f.prefix_super_sub}")
 
     if f.ip_version:
-        parts.append(f"ipversion {f.ip_version[-1]}")
+        parts.append(f"ipversion {f.ip_version}")
 
     # Warn about unsupported fields
     if f.peer_ip or f.peer_ips:
-        print(
-            "Warning: peer_ip and peer_ips are not supported by this BGPStream filter string parser and will be ignored."
+        logging.info(
+            "Filtering by peer_ip is not supported natively by pybgpstream (falling back to python-side filtering)"
         )
 
     # Join all parts with 'and' as required by the parser

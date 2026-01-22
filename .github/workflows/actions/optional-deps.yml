@@ -1,0 +1,39 @@
+name: 'Install Optional BGP Dependencies'
+description: 'Installs libbgpstream, bgpdump, and bgpkit-parser'
+runs:
+  using: "composite"
+  steps:
+    - name: Install libBGPStream Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential curl zlib1g-dev libbz2-dev libcurl4-openssl-dev librdkafka-dev autoconf automake libtool
+
+    - name: Compile and Install libBGPStream
+      run: |
+        # 1. Download wandio
+        mkdir -p ~/src && cd ~/src/
+        curl -LO https://github.com/LibtraceTeam/wandio/archive/refs/tags/4.2.4-1.tar.gz
+        tar zxf 4.2.4-1.tar.gz
+        cd wandio-4.2.4-1/
+        autoreconf -i
+        ./configure
+        make
+        sudo make install
+        sudo ldconfig
+
+        # 2. Download and install libBGPStream
+        cd ~/src/
+        curl -LO https://github.com/CAIDA/libbgpstream/releases/download/v2.2.0/libbgpstream-2.2.0.tar.gz
+        tar zxf libbgpstream-2.2.0.tar.gz
+        cd libbgpstream-2.2.0/
+        sed -i '13436 i #define _GNU_SOURCE' configure
+        ./configure
+        make
+        sudo make install
+        sudo ldconfig
+    
+    - name: Install bgpdump
+      run: sudo apt install -y bgpdump
+
+    - name: Install bgpkit-parser CLI
+      run: cargo install bgpkit-parser

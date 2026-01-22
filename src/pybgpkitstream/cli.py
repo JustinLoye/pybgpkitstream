@@ -2,8 +2,12 @@ import argparse
 import sys
 import datetime
 
-from pybgpkitstream import BGPStreamConfig, FilterOptions
-from pybgpkitstream import BGPKITStream
+from pybgpkitstream import (
+    BGPStreamConfig,
+    FilterOptions,
+    PyBGPKITStreamConfig,
+    BGPKITStream,
+)
 
 
 def main():
@@ -39,12 +43,6 @@ def main():
         choices=["ribs", "updates"],
         default=["updates"],
         help="List of archives to consider ('ribs' or 'updates').",
-    )
-    parser.add_argument(
-        "--cache-dir",
-        type=str,
-        default=None,
-        help="Directory for caching downloaded files.",
     )
 
     # Arguments for FilterOptions
@@ -93,7 +91,7 @@ def main():
     )
     parser.add_argument(
         "--peer-asn",
-        type=str,
+        type=int,
         default=None,
         help="Filter by the AS number of the BGP peer.",
     )
@@ -109,6 +107,20 @@ def main():
         type=str,
         default=None,
         help="Filter by a regular expression matching the AS path.",
+    )
+
+    # PyBGPKITStream implementation parameters
+    parser.add_argument(
+        "--cache-dir",
+        type=str,
+        default=None,
+        help="Directory for caching downloaded files.",
+    )
+    parser.add_argument(
+        "--parser",
+        type=str,
+        choices=["pybgpkit", "bgpkit", "pybgpstream", "bgpdump"],
+        default="pybgpkit",
     )
 
     args = parser.parse_args()
@@ -130,19 +142,25 @@ def main():
     if all(value is None for value in filter_options.model_dump().values()):
         filter_options = None
 
-    config = BGPStreamConfig(
+    bgpstream_config = BGPStreamConfig(
         start_time=args.start_time,
         end_time=args.end_time,
         collectors=args.collectors,
         data_types=args.data_types,
-        cache_dir=args.cache_dir,
         filters=filter_options,
     )
 
+    config = PyBGPKITStreamConfig(
+        bgpstream_config=bgpstream_config, cache_dir=args.cache_dir, parser=args.parser
+    )
+
+    for element in BGPKITStream.from_config(config):
+        print(element)
     try:
         for element in BGPKITStream.from_config(config):
             print(element)
     except Exception as e:
+        print(e)
         print(f"An error occurred during streaming: {e}", file=sys.stderr)
         sys.exit(1)
 
