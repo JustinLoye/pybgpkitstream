@@ -1,6 +1,6 @@
 [project]
 name = "pybgpkitstream"
-version = "0.3.0"
+version = "0.4.0"
 description = "Drop-in replacement for PyBGPStream using BGPKIT"
 readme = "README.md"
 authors = [

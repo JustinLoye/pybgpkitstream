@@ -55,5 +55,5 @@ BGPKIT broker and parser are great, but cannot be used to create an ordered stre
 
 ## Missing features
 
-- live mode (I plan to add semi-live soon.)
-- `pybgpkitstream.BGPElement` is not fully compatible with `pybgpstream.BGPElem`: missing record_type, project, router, router_ip
+- Live mode for RouteViews collectors
+- Some PyBGPStream data interface options like csv or sqlite
