@@ -1,6 +1,7 @@
 import datetime
 import re
 
+
 def dt_from_filepath(filepath: str, pattern=r"(\d{8}\.\d{4})") -> datetime.datetime:
     match = re.search(pattern, filepath)
     if not match:

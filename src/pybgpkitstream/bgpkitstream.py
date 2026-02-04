@@ -19,6 +19,7 @@ from pybgpkitstream.bgpstreamconfig import (
     BGPStreamConfig,
     FilterOptions,
     PyBGPKITStreamConfig,
+    LiveStreamConfig,
 )
 from pybgpkitstream.bgpelement import BGPElement
 from pybgpkitstream.bgpparser import (
@@ -28,6 +29,7 @@ from pybgpkitstream.bgpparser import (
     PyBGPStreamParser,
     BGPdumpParser,
 )
+from pybgpkitstream.rislive import RISLiveStream, jitter_buffer_stream
 from pybgpkitstream.utils import dt_from_filepath
 
 name2parser = {
@@ -39,23 +41,6 @@ name2parser = {
 
 
 logger = logging.getLogger(__name__)
-
-
-def convert_bgpkit_elem(element, is_rib: bool, collector: str) -> BGPElement:
-    """Convert pybgpkit element to pybgpstream-like element"""
-    return BGPElement(
-        type="R" if is_rib else element.elem_type,
-        collector=collector,
-        time=element.timestamp,
-        peer_asn=element.peer_asn,
-        peer_address=element.peer_ip,
-        fields={
-            "next-hop": element.next_hop,
-            "as-path": element.as_path,
-            "communities": [] if not element.communities else element.communities,
-            "prefix": element.prefix,
-        },
-    )
 
 
 def crc32(input_str: str):
@@ -87,21 +72,22 @@ def get_shared_memory():
 class BGPKITStream:
     def __init__(
         self,
-        ts_start: float,
-        ts_end: float,
-        collector_id: str,
+        collectors: list[str],
         data_type: list[Literal["update", "rib"]],
-        filters: FilterOptions | None,
+        ts_start: float = None,
+        ts_end: float = None,
+        filters: FilterOptions | None = None,
         cache_dir: str | None = None,
         max_concurrent_downloads: int | None = 10,
         chunk_time: float | None = datetime.timedelta(hours=2).seconds,
         ram_fetch: bool | None = True,
         parser_name: str | None = "pybgpkit",
+        jitter_buffer_delay: float | None = 10.0,
     ):
         # Stream config
         self.ts_start = ts_start
         self.ts_end = ts_end
-        self.collector_id = collector_id
+        self.collectors = collectors
         self.data_type = data_type
         if not filters:
             filters = FilterOptions()
@@ -125,6 +111,9 @@ class BGPKITStream:
 
         self.broker = bgpkit.Broker()
         self.parser_cls: BGPParser = name2parser[parser_name]
+
+        # Live config
+        self.jitter_buffer_delay = jitter_buffer_delay
 
     @staticmethod
     def _generate_cache_filename(url):
@@ -163,7 +152,7 @@ class BGPKITStream:
             items: list[BrokerItem] = self.broker.query(
                 ts_start=int(self.ts_start - 60),
                 ts_end=int(self.ts_end),
-                collector_id=self.collector_id,
+                collector_id=",".join(self.collectors),
                 data_type=data_type,
             )
             for item in items:
@@ -226,6 +215,8 @@ class BGPKITStream:
                 logging.info("All downloads finished.")
 
     def __iter__(self):
+        if self.ts_start is None and self.ts_end is None:
+            return self._iter_live()
         if "update" in self.data_type:
             return self._iter_update()
         else:
@@ -250,7 +241,7 @@ class BGPKITStream:
                         ts_start=current,
                         ts_end=chunk_end
                         - 1,  # remove one second because BGPKIT include border
-                        collector_id=self.collector_id,
+                        collectors=self.collectors,
                         data_type=self.data_type,
                         cache_dir=self.cache_dir.name
                         if isinstance(self.cache_dir, Directory)
@@ -319,7 +310,7 @@ class BGPKITStream:
                         ts_start=current,
                         ts_end=chunk_end
                         - 1,  # remove one second because BGPKIT include border
-                        collector_id=self.collector_id,
+                        collectors=self.collectors,
                         data_type=self.data_type,
                         cache_dir=self.cache_dir.name
                         if isinstance(self.cache_dir, Directory)
@@ -365,14 +356,30 @@ class BGPKITStream:
         finally:
             self.cache_dir.cleanup()
 
+    def _iter_live(self) -> Iterator[BGPElement]:
+
+        ris_collectors = [
+            collector for collector in self.collectors if collector[:3] == "rrc"
+        ]
+
+        stream = RISLiveStream(collectors=ris_collectors, filters=self.filters)
+
+        if self.jitter_buffer_delay is not None and self.jitter_buffer_delay > 0:
+            stream = jitter_buffer_stream(stream, buffer_delay=self.jitter_buffer_delay)
+
+        for elem in stream:
+            yield elem
+
     @classmethod
-    def from_config(cls, config: PyBGPKITStreamConfig | BGPStreamConfig):
+    def from_config(
+        cls, config: PyBGPKITStreamConfig | BGPStreamConfig | LiveStreamConfig
+    ):
         if isinstance(config, PyBGPKITStreamConfig):
             stream_config = config.bgpstream_config
             return cls(
                 ts_start=stream_config.start_time.timestamp(),
                 ts_end=stream_config.end_time.timestamp(),
-                collector_id=",".join(stream_config.collectors),
+                collectors=stream_config.collectors,
                 data_type=[dtype[:-1] for dtype in stream_config.data_types],
                 filters=stream_config.filters
                 if stream_config.filters
@@ -387,10 +394,29 @@ class BGPKITStream:
             )
 
         elif isinstance(config, BGPStreamConfig):
+            if not config.is_live():
+                return cls(
+                    ts_start=config.start_time.timestamp(),
+                    ts_end=config.end_time.timestamp(),
+                    collectors=config.collectors,
+                    data_type=[dtype[:-1] for dtype in config.data_types],
+                    filters=config.filters if config.filters else FilterOptions(),
+                )
+            else:
+                return cls(
+                    collectors=config.collectors,
+                    data_type=["update"],
+                    filters=config.filters if config.filters else FilterOptions(),
+                    jitter_buffer_delay=10,
+                )
+
+        elif isinstance(config, LiveStreamConfig):
             return cls(
-                ts_start=config.start_time.timestamp(),
-                ts_end=config.end_time.timestamp(),
-                collector_id=",".join(config.collectors),
-                data_type=[dtype[:-1] for dtype in config.data_types],
+                collectors=config.collectors,
+                data_type=["update"],
                 filters=config.filters if config.filters else FilterOptions(),
+                jitter_buffer_delay=config.jitter_buffer_delay,
             )
+
+        else:
+            raise ValueError("Unsupported config type")

@@ -11,6 +11,7 @@ dependencies = [
     "aiohttp>=3.12.15",
     "pybgpkit>=0.6.2",
     "pydantic>=2.11.9",
+    "websocket-client>=1.8.0",
 ]
 
 [build-system]

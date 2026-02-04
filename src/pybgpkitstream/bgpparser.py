@@ -115,9 +115,9 @@ class BGPKITParser(BGPParser):
         # Structure: Type|Time|PeerIP|PeerAS|Prefix
         if rec_type == "W":
             return BGPElement(
+                time=self.time,  # force RIB filename timestamp instead of last changed
                 type="W",
                 collector=self.collector,
-                time=self.time,  # force RIB filename timestamp instead of last changed
                 peer_asn=int(element[3]),
                 peer_address=element[2],
                 fields={"prefix": element[4]},
@@ -133,11 +133,10 @@ class BGPKITParser(BGPParser):
 
         return BGPElement(
             # bgpkit outputs 'A' for both Updates and RIB entries.
-            # Map to "A" (Announcement) or change to "R" if you strictly need RIB typing.
+            self.time,
             "R" if self.is_rib else rec_type,
             self.collector,
             # float(element[1]),
-            self.time,
             int(element[3]),
             element[2],
             {
@@ -242,9 +241,9 @@ class BGPdumpParser(BGPParser):
         # 1. Handle Withdrawals (Fastest path, fewer fields)
         if elem_type == "W":
             return BGPElement(
+                float(element[1]),
                 "W",
                 self.collector,
-                float(element[1]),
                 int(element[4]),
                 element[3],
                 {"prefix": element[5]},  # Dict literal is faster than assignment
@@ -257,9 +256,9 @@ class BGPdumpParser(BGPParser):
         # Logic: if TABLE_DUMP2, type is R, else A
         # Construct fields dict in one shot (BUILD_MAP opcode)
         return BGPElement(
+            float(element[1]),
             "R" if elem_type == "B" else "A",
             self.collector,
-            float(element[1]),
             int(element[4]),
             element[3],
             {
@@ -267,7 +266,7 @@ class BGPdumpParser(BGPParser):
                 "as-path": element[6],
                 "next-hop": element[8],
                 # Check for empty string before splitting (avoids creating [''])
-                "communities": rec_comm.split() if rec_comm else [],
+                "communities": rec_comm.split(" ") if rec_comm else [],
             },
         )
 
