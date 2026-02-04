@@ -154,13 +154,10 @@ def main():
         bgpstream_config=bgpstream_config, cache_dir=args.cache_dir, parser=args.parser
     )
 
-    for element in BGPKITStream.from_config(config):
-        print(element)
     try:
         for element in BGPKITStream.from_config(config):
             print(element)
     except Exception as e:
-        print(e)
         print(f"An error occurred during streaming: {e}", file=sys.stderr)
         sys.exit(1)
 

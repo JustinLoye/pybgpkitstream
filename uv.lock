@@ -1733,6 +1733,7 @@ dependencies = [
     { name = "aiohttp" },
     { name = "pybgpkit" },
     { name = "pydantic" },
+    { name = "websocket-client" },
 ]
 
 [package.dev-dependencies]
@@ -1748,6 +1749,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.12.15" },
     { name = "pybgpkit", specifier = ">=0.6.2" },
     { name = "pydantic", specifier = ">=2.11.9" },
+    { name = "websocket-client", specifier = ">=1.8.0" },
 ]
 
 [package.metadata.requires-dev]

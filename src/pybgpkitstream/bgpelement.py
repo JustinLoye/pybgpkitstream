@@ -14,9 +14,9 @@ class ElementFields(TypedDict):
 class BGPElement(NamedTuple):
     """Compatible with pybgpstream.BGPElem"""
 
+    time: float  # time first for sorting tuples convention
     type: str
     collector: str
-    time: float
     peer_asn: int
     peer_address: str
     fields: ElementFields
@@ -31,7 +31,9 @@ class BGPElement(NamedTuple):
             self.peer_address,
             self._maybe_field("prefix"),
             self._maybe_field("next-hop"),
-            self._maybe_field("as-path"),
+            " ".join(map(str, self.fields["as-path"]))
+            if "as-path" in self.fields
+            else None,
             " ".join(self.fields["communities"])
             if "communities" in self.fields
             else None,
@@ -42,3 +44,10 @@ class BGPElement(NamedTuple):
     def _maybe_field(self, field):
         """Credit to pybgpstream"""
         return self.fields[field] if field in self.fields else None
+
+    # Useful for sorting streams
+    def __lt__(self, other):
+        return self.time < other.time
+
+    def __le__(self, other):
+        return self.time <= other.time

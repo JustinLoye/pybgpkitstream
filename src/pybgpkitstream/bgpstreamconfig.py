@@ -48,26 +48,65 @@ class FilterOptions(BaseModel):
 
 
 class BGPStreamConfig(BaseModel):
-    """Unified BGPStream config, compatible with BGPKIT and pybgpstream"""
+    """Unified BGPStream config"""
 
-    start_time: datetime.datetime = Field(description="Start of the stream")
-    end_time: datetime.datetime = Field(description="End of the stream")
+    start_time: datetime.datetime | None = Field(
+        default=None, description="Start of the stream"
+    )
+    end_time: datetime.datetime | None = Field(
+        default=None, description="End of the stream"
+    )
     collectors: list[str] = Field(description="List of collectors to get data from")
-    data_types: list[Literal["ribs", "updates"]] = Field(
-        description="List of archives files to consider (`ribs` or `updates`)"
+    data_types: list[Literal["ribs", "updates"]] | None = Field(
+        default=["updates"],
+        description="List of archives files to consider (`ribs` or `updates`)",
     )
 
     filters: FilterOptions | None = Field(default=None, description="Optional filters")
 
-    @field_validator("start_time", "end_time")
+    @field_validator("start_time", "end_time", mode="before")
     @classmethod
     def normalize_to_utc(cls, dt: datetime.datetime) -> datetime.datetime:
+        if dt is None:
+            return None
         # if naive datetime (not timezone-aware) assume it's UTC
         if dt.tzinfo is None:
             return dt.replace(tzinfo=datetime.timezone.utc)
         # if timezone-aware, convert to utc
         else:
             return dt.astimezone(datetime.timezone.utc)
+
+    @model_validator(mode="after")
+    def validate(self) -> "BGPStreamConfig":
+
+        if (self.start_time is None) ^ (self.end_time is None):
+            raise ValueError(
+                "Provide both start and end times, or leave both as None for live mode."
+            )
+        if not self.is_live():
+            assert self.start_time < self.end_time
+        # Force data_type to update for live mode
+        else:
+            if self.data_types is None:
+                self.data_types = ["updates"]
+
+        return self
+
+    def is_live(self) -> bool:
+        return self.start_time is None and self.end_time is None
+
+
+class LiveStreamConfig(BaseModel):
+    """Config for live mode"""
+
+    collectors: list[str] = Field(
+        description="List of collectors to get data from (for now only RIS live collectors)"
+    )
+    filters: FilterOptions | None = Field(default=None, description="Optional filters")
+    jitter_buffer_delay: float | None = Field(
+        default=10.0,
+        description="Jitter buffer time in seconds to make sure RIS live updates are time-sorted. Introduce a slight delay. Set to None or 0 to disable",
+    )
 
 
 class PyBGPKITStreamConfig(BaseModel):
@@ -135,26 +174,31 @@ class PyBGPKITStreamConfig(BaseModel):
                 raise ValueError(
                     "bgpkit binary not found in PATH. "
                     "Install from: https://github.com/bgpkit/bgpkit-parser "
-                    "or use cargo: cargo install bgpkit-parser"
+                    "or use cargo: cargo install bgpkit-parser --features cli"
                 )
 
-        # Return the parser value if validation passes
         return parser
-    
-    @model_validator(mode='before')
+
+    @model_validator(mode="before")
     @classmethod
     def nest_bgpstream_params(cls, data: dict) -> dict:
         """Allow to define a flat config"""
         # If the user already provided 'bgpstream_config', do nothing
         if "bgpstream_config" in data:
             return data
-        
+
         # Define which fields belong to the inner BGPStreamConfig
-        stream_fields = {"start_time", "end_time", "collectors", "data_types", "filters"}
-        
+        stream_fields = {
+            "start_time",
+            "end_time",
+            "collectors",
+            "data_types",
+            "filters",
+        }
+
         # Extract those fields from the flat input
         inner_data = {k: data.pop(k) for k in stream_fields if k in data}
-        
+
         # Nest them back into the dictionary
         data["bgpstream_config"] = inner_data
         return data
