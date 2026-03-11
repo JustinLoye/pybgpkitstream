@@ -58,9 +58,7 @@ class RISLiveStream:
     ):
         self.collectors = collectors
         self.client = client
-        print(filters)
         self.filters = self._convert_filter_options(filters)
-        print(self.filters)
 
     @staticmethod
     def _convert_filter_options(f: FilterOptions) -> dict:
@@ -110,7 +108,6 @@ class RISLiveStream:
         for collector in self.collectors:
             params = {"host": collector, "type": "UPDATE"}
             params = params | self.filters
-            print(params)
             ws.send(json.dumps({"type": "ris_subscribe", "data": params}))
 
         for data in ws:
