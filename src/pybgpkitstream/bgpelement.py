@@ -31,11 +31,11 @@ class BGPElement(NamedTuple):
             self.peer_address,
             self._maybe_field("prefix"),
             self._maybe_field("next-hop"),
-            " ".join(map(str, self.fields["as-path"]))
-            if "as-path" in self.fields
+            self.fields["as-path"]
+            if self.fields.get('as-path')
             else None,
             " ".join(self.fields["communities"])
-            if "communities" in self.fields
+            if self.fields.get('communities')
             else None,
             self._maybe_field("old-state"),
             self._maybe_field("new-state"),
