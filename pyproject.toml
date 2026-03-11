@@ -33,3 +33,6 @@ pybgpkitstream = "pybgpkitstream.cli:main"
 log_cli = true
 log_cli_level = "INFO"
 addopts = "-q -rs"
+
+[project.urls]
+Repository = "https://github.com/JustinLoye/pybgpkitstream"
