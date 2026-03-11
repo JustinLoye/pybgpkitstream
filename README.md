@@ -29,7 +29,7 @@ from pybgpkitstream import BGPStreamConfig, BGPKITStream
 config = BGPStreamConfig(
     start_time=datetime.datetime(2010, 9, 1, 0, 0),
     end_time=datetime.datetime(2010, 9, 1, 1, 59),
-    collectors=["route-views.sydney", "route-views.wide"],
+    collectors=["route-views.wide", "rrc04"],
     data_types=["ribs", "updates"],
 )
 
