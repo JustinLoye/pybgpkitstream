@@ -1,4 +1,4 @@
-from typing import NamedTuple, TypedDict
+from typing import NamedTuple, TypedDict, Literal
 
 
 class ElementFields(TypedDict):
@@ -15,7 +15,7 @@ class BGPElement(NamedTuple):
     """Compatible with pybgpstream.BGPElem"""
 
     time: float  # time first for sorting tuples convention
-    type: str
+    type: Literal["R", "A", "W"]
     collector: str
     peer_asn: int
     peer_address: str
