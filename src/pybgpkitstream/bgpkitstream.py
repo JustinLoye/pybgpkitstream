@@ -70,6 +70,67 @@ def get_shared_memory():
 
 
 class BGPKITStream:
+    """Stream and process BGP messages from multiple collectors.
+
+    BGPKITStream is a high-performance alternative to PyBGPStream that parses BGP
+    MRT files using BGPKIT. It can stream both historical and live BGP data with
+    support for advanced filtering, multiple parser backends, and memory-efficient
+    lazy loading.
+
+    Attributes:
+        collectors (list[str]): List of collector names to fetch data from.
+        data_type (list[Literal["update", "rib"]]): Data types to stream ("update" or "rib").
+        ts_start (float | None): Start timestamp (Unix epoch). None for live mode.
+        ts_end (float | None): End timestamp (Unix epoch). None for live mode.
+        filters (FilterOptions): Filtering options for BGP elements.
+        cache_dir (Directory | TemporaryDirectory): Cache directory for downloaded files.
+        parser_name (str): Backend parser to use ("pybgpkit", "bgpkit", "bgpdump", "pybgpstream").
+        max_concurrent_downloads (int): Maximum concurrent file downloads.
+        chunk_time (float): Time window (seconds) for processing chunks. Default is 2 hours.
+        ram_fetch (bool): Use RAM disk (/dev/shm, /Volumes/RAMDisk) if available.
+        jitter_buffer_delay (float): Delay (seconds) for jitter buffer in live mode.
+
+    Examples:
+        Stream historical BGP data:
+
+        ```python
+        config = BGPStreamConfig(
+            start_time=datetime.datetime(2010, 9, 1, 0, 0),
+            end_time=datetime.datetime(2010, 9, 1, 2, 0),
+            collectors=["route-views.wide"],
+        )
+        stream = BGPKITStream.from_config(config)
+        for elem in stream:
+            print(elem)
+        ```
+
+        Direct instantiation with filters:
+
+        ```python
+        stream = BGPKITStream(
+            collectors=["route-views.wide"],
+            data_type=["update"],
+            ts_start=1283203200,
+            ts_end=1283289600,
+            filters=FilterOptions(origin_asn=64512),
+            parser_name="bgpkit",
+        )
+        for elem in stream:
+            print(f"{elem.prefix}: {elem.fields['as-path']}")
+        ```
+
+        Live streaming from RIS Live:
+
+        ```python
+        config = BGPStreamConfig(
+            collectors=["rrc00"],
+            data_types=["updates"],
+        )
+        stream = BGPKITStream.from_config(config)
+        for elem in stream:
+            print(f"Live: {elem.type} {elem.prefix}")
+        ```
+    """
     def __init__(
         self,
         collectors: list[str],
@@ -84,6 +145,29 @@ class BGPKITStream:
         parser_name: str | None = "pybgpkit",
         jitter_buffer_delay: float | None = 10.0,
     ):
+        """Initialize a BGP stream.
+
+        Args:
+            collectors: List of collector names (e.g., ["route-views.wide", "rrc04"]).
+            data_type: List of data types to stream ("update", "rib", or both).
+            ts_start: Start timestamp (Unix epoch) for historical data. None for live mode.
+            ts_end: End timestamp (Unix epoch) for historical data. None for live mode.
+            filters: Optional FilterOptions to filter BGP elements. Defaults to no filtering.
+            cache_dir: Directory to cache downloaded MRT files. If None, uses temporary directory.
+            max_concurrent_downloads: Maximum concurrent downloads. Default is 10.
+            chunk_time: Time window (seconds) for streaming chunks. Default is 2 hours (7200s).
+            ram_fetch: Use RAM disk for temporary files if available. Default is True.
+            parser_name: Parser backend ("pybgpkit", "bgpkit", "bgpdump", "pybgpstream").
+                Default is "pybgpkit" (no system dependencies).
+            jitter_buffer_delay: Delay (seconds) for jitter buffer in live mode. Default is 10.0.
+
+        Raises:
+            ValueError: If parser_name is invalid.
+
+        Note:
+            For live mode, set both ts_start and ts_end to None.
+            For historical data, both ts_start and ts_end must be provided.
+        """
         # Stream config
         self.ts_start = ts_start
         self.ts_end = ts_end
@@ -373,7 +457,36 @@ class BGPKITStream:
     @classmethod
     def from_config(
         cls, config: PyBGPKITStreamConfig | BGPStreamConfig | LiveStreamConfig
-    ):
+    ) -> "BGPKITStream":
+        """Create a BGPKITStream from a configuration object.
+
+        Factory method to create a stream from various configuration types,
+        automatically handling conversions and parameter mappings.
+
+        Args:
+            config: Configuration object, one of:
+                - BGPStreamConfig: Standard unified configuration.
+                - PyBGPKITStreamConfig: Extended configuration with caching and parser options.
+                - LiveStreamConfig: Configuration for live RIS Live streaming.
+
+        Returns:
+            BGPKITStream: Initialized stream ready for iteration.
+
+        Examples:
+            ```python
+            from pybgpkitstream import BGPStreamConfig, BGPKITStream
+            import datetime
+
+            config = BGPStreamConfig(
+                start_time=datetime.datetime(2010, 9, 1, 0, 0),
+                end_time=datetime.datetime(2010, 9, 1, 2, 0),
+                collectors=["route-views.wide"],
+            )
+            stream = BGPKITStream.from_config(config)
+            for elem in stream:
+                print(elem)
+            ```
+        """
         if isinstance(config, PyBGPKITStreamConfig):
             stream_config = config.bgpstream_config
             return cls(
