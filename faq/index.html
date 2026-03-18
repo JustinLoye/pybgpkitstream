@@ -896,6 +896,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-do-i-need-a-library-to-stream-bgp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why do I need a library to stream BGP data?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-a-new-library-to-stream-bgp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a new library to stream BGP data?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-the-difference-between-pybgpkitstream-and-pybgpstream" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1035,6 +1057,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-do-i-need-a-library-to-stream-bgp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why do I need a library to stream BGP data?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-a-new-library-to-stream-bgp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a new library to stream BGP data?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-the-difference-between-pybgpkitstream-and-pybgpstream" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1161,6 +1205,12 @@
 
 <h1 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h1>
 <p>Frequently asked questions about PyBGPKITStream.</p>
+<h2 id="why-do-i-need-a-library-to-stream-bgp-data">Why do I need a library to stream BGP data?<a class="headerlink" href="#why-do-i-need-a-library-to-stream-bgp-data" title="Permanent link">&para;</a></h2>
+<p>Even basic historical BGP data queries often involve several manual steps: locating the correct archive, downloading it, and parsing the contents. For more complex queries, such as those involving multiple collectors or specific time ranges, the difficulty increases as users have to manually manage and synchronize numerous archive files.</p>
+<p>The goal of PyBGPStream and PyBGPKITStream is to abstract these complexities away. This allows users to focus on the actual data analysis rather than the infrastructure and boilerplate code required to fetch it.</p>
+<h2 id="why-a-new-library-to-stream-bgp-data">Why a new library to stream BGP data?<a class="headerlink" href="#why-a-new-library-to-stream-bgp-data" title="Permanent link">&para;</a></h2>
+<p>While PyBGPStream has long been the primary tool for streaming historical BGP data from multiple collectors, it is currently no longer actively maintained. As of early 2026, several key features have become unreliable or non-functional, specifically support for RIS Live and data from certain RIS collectors.</p>
+<p>PyBGPKITStream was developed to fill this gap, providing a modern, maintained alternative that restores these capabilities while offering the performance benefits of the BGPKIT ecosystem.</p>
 <h2 id="whats-the-difference-between-pybgpkitstream-and-pybgpstream">What's the difference between PyBGPKITStream and PyBGPStream?<a class="headerlink" href="#whats-the-difference-between-pybgpkitstream-and-pybgpstream" title="Permanent link">&para;</a></h2>
 <p>PyBGPKITStream is a drop-in replacement for PyBGPStream that uses BGPKIT for retrieve and parsing MRT files. Key advantages:</p>
 <ul>

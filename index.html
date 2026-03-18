@@ -493,6 +493,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Motivation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Motivation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-do-i-need-a-library-to-stream-bgp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why do I need a library to stream BGP data?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-a-new-library-to-stream-bgp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a new library to stream BGP data?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1040,6 +1079,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Motivation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Motivation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-do-i-need-a-library-to-stream-bgp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why do I need a library to stream BGP data?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-a-new-library-to-stream-bgp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a new library to stream BGP data?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1117,6 +1195,13 @@
 <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">elem</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">elem</span><span class="o">.</span><span class="n">time</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">elem</span><span class="o">.</span><span class="n">collector</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">elem</span><span class="o">.</span><span class="n">peer_asn</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">elem</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
+<h2 id="motivation">Motivation<a class="headerlink" href="#motivation" title="Permanent link">&para;</a></h2>
+<h3 id="why-do-i-need-a-library-to-stream-bgp-data">Why do I need a library to stream BGP data?<a class="headerlink" href="#why-do-i-need-a-library-to-stream-bgp-data" title="Permanent link">&para;</a></h3>
+<p>Even basic historical BGP data queries often involve several manual steps: locating the correct archive, downloading it, and parsing the contents. For more complex queries, such as those involving multiple collectors or specific time ranges, the difficulty increases as users have to manually manage and synchronize numerous archive files.</p>
+<p>The goal of PyBGPKITStream is to abstract these complexities away. This allows users to focus on the actual data analysis rather than the infrastructure and boilerplate code required to fetch it.</p>
+<h3 id="why-a-new-library-to-stream-bgp-data">Why a new library to stream BGP data?<a class="headerlink" href="#why-a-new-library-to-stream-bgp-data" title="Permanent link">&para;</a></h3>
+<p>While PyBGPStream has long been the primary tool for streaming historical BGP data from multiple collectors, it is currently no longer actively maintained. As of early 2026, several key features have become unreliable or non-functional, specifically support for RIPE RIS Live and data from certain RIPE RIS collectors.</p>
+<p>PyBGPKITStream was developed to fill this gap, providing a modern, maintained alternative that restores these capabilities while offering the performance benefits of the BGPKIT ecosystem.</p>
 <h2 id="whats-next">What's Next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="getting_started/">Getting Started Guide</a> - Set up your first BGP stream</li>
