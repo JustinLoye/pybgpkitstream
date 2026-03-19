@@ -42,6 +42,11 @@ name2parser = {
 
 logger = logging.getLogger(__name__)
 
+# Download retry constants
+MAX_RETRIES = 5
+INITIAL_BACKOFF = 0.2  # seconds
+REQUEST_DELAY = 0.05 # 50ms
+
 
 def crc32(input_str: str):
     input_bytes = input_str.encode("utf-8")
@@ -241,22 +246,44 @@ class BGPKITStream:
             )
             for item in items:
                 self.urls[data_type][item.collector_id].append(item.url)
-
+            
     async def _download_file(self, semaphore, session, url, filepath, data_type, rc):
-        """Helper coroutine to download a single file, controlled by a semaphore"""
+        """Helper coroutine to download a single file with retries and backoff, controlled by a semaphore."""
         async with semaphore:
-            logging.debug(f"{filepath} is a cache miss. Downloading {url}")
-            try:
-                async with session.get(url) as resp:
-                    resp.raise_for_status()
-                    with open(filepath, "wb") as fd:
-                        async for chunk in resp.content.iter_chunked(8192):
-                            fd.write(chunk)
-                    return data_type, rc, filepath
-            except aiohttp.ClientError as e:
-                logging.error(f"Failed to download {url}: {e}")
-                # Return None on failure so asyncio.gather doesn't cancel everything.
-                return None
+            for attempt in range(MAX_RETRIES + 1):
+                try:
+                    # 1. Mandatory 50ms delay before every request attempt
+                    await asyncio.sleep(REQUEST_DELAY)
+
+                    logging.debug(f"Attempt {attempt + 1}: Downloading {url}")
+                    
+                    async with session.get(url) as resp:
+                        resp.raise_for_status()
+                        
+                        # Using a temporary file is safer to avoid partial cache hits
+                        temp_filepath = f"{filepath}.tmp"
+                        with open(temp_filepath, "wb") as fd:
+                            async for chunk in resp.content.iter_chunked(8192):
+                                fd.write(chunk)
+                        
+                        # Rename temp file to actual filepath on success
+                        os.rename(temp_filepath, filepath)
+                        return data_type, rc, filepath
+
+                except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                    backoff = INITIAL_BACKOFF * (2 ** attempt)
+                    
+                    if attempt < MAX_RETRIES:
+                        logging.warning(
+                            f"Retrying {url} in {backoff}s due to error: {e} (Attempt {attempt + 1}/{MAX_RETRIES})"
+                        )
+                        await asyncio.sleep(backoff)
+                    else:
+                        logging.error(f"Failed to download {url} after {MAX_RETRIES} retries: {e}")
+                        # Clean up temp file if it exists
+                        if os.path.exists(f"{filepath}.tmp"):
+                            os.remove(f"{filepath}.tmp")
+                        return None
 
     async def _prefetch_data(self):
         """Download archive files concurrently and cache to `self.cache_dir`"""
