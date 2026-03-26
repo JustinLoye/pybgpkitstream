@@ -1,6 +1,6 @@
 [project]
 name = "pybgpkitstream"
-version = "0.4.5"
+version = "0.4.6"
 description = "Drop-in replacement for PyBGPStream using BGPKIT"
 readme = "README.md"
 authors = [
@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
+    "aiofiles>=25.1.0",
     "aiohttp>=3.12.15",
     "pybgpkit>=0.6.2",
     "pydantic>=2.11.9",

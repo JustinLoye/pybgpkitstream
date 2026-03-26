@@ -11,6 +11,7 @@ import binascii
 import logging
 from tempfile import TemporaryDirectory
 
+import aiofiles
 import aiohttp
 import bgpkit
 from bgpkit.bgpkit_broker import BrokerItem
@@ -262,9 +263,9 @@ class BGPKITStream:
                         
                         # Using a temporary file is safer to avoid partial cache hits
                         temp_filepath = f"{filepath}.tmp"
-                        with open(temp_filepath, "wb") as fd:
-                            async for chunk in resp.content.iter_chunked(8192):
-                                fd.write(chunk)
+                        async with aiofiles.open(temp_filepath, mode="wb") as fd:
+                            async for chunk in resp.content.iter_chunked(32768):
+                                await fd.write(chunk)
                         
                         # Rename temp file to actual filepath on success
                         os.rename(temp_filepath, filepath)
@@ -292,8 +293,8 @@ class BGPKITStream:
 
         semaphore = asyncio.Semaphore(self.max_concurrent_downloads)
 
-        conn = aiohttp.TCPConnector()
-        async with aiohttp.ClientSession(connector=conn) as session:
+        timeout = aiohttp.ClientTimeout(total=None, sock_read=300)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             # Create all the download tasks.
             for data_type in self.data_type:
                 for rc, rc_urls in self.urls[data_type].items():

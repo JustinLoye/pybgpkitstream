@@ -1,5 +1,10 @@
 # PyBGPKITStream
 
+[![Docs](https://img.shields.io/badge/docs-justinloye.github.io-blue)](https://justinloye.github.io/pybgpkitstream/)
+[![PyPI - Version](https://img.shields.io/pypi/v/pybgpkitstream.svg)](https://pypi.org/project/pybgpkitstream)
+[![CI](https://github.com/JustinLoye/pybgpkitstream/actions/workflows/ci.yml/badge.svg)](https://github.com/JustinLoye/pybgpkitstream/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/JustinLoye/pybgpkitstream.svg)](https://github.com/JustinLoye/pybgpkitstream/blob/main/LICENSE)
+
 A drop-in replacement for PyBGPStream using BGPKIT
 
 ## Features
