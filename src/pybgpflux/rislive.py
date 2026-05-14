@@ -3,8 +3,8 @@ import json
 import heapq
 import websocket
 
-from pybgpkitstream.bgpelement import BGPElement
-from pybgpkitstream.bgpstreamconfig import FilterOptions
+from pybgpflux.bgpelement import BGPElement
+from pybgpflux.bgpstreamconfig import FilterOptions
 
 
 def ris_message2bgpelem(ris_message: dict) -> Iterator[BGPElement]:
@@ -53,7 +53,7 @@ class RISLiveStream:
     def __init__(
         self,
         collectors: list[str],
-        client="pybgpkitstream",
+        client="pybgpflux",
         filters: FilterOptions = None,
     ):
         self.collectors = collectors

@@ -3,9 +3,9 @@ import sys
 
 def test_smoke():
     """A minimal test to ensure the package and its main components can be imported."""
-    import pybgpkitstream
+    import pybgpflux
 
-    assert pybgpkitstream is not None
+    assert pybgpflux is not None
 
 
 if __name__ == "__main__":

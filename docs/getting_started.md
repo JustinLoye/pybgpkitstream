@@ -1,21 +1,21 @@
 # Getting Started
 
-Get up and running with PyBGPKITStream in just a few minutes.
+Get up and running with PyBGPFlux in just a few minutes.
 
 ## Installation
 
-PyBGPKITStream is available from PyPI
+PyBGPFlux is available from PyPI
 
 Install with pip:
 
 ```bash
-pip install pybgpkitstream
+pip install pybgpflux
 ```
 
 Install with uv:
 
 ```bash
-uv add pybgpkitstream
+uv add pybgpflux
 ```
 
 ## Examples
@@ -24,7 +24,7 @@ uv add pybgpkitstream
 
 ```python
 import datetime
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
 # Create configuration
 config = BGPStreamConfig(
@@ -35,29 +35,29 @@ config = BGPStreamConfig(
 )
 
 # Create and iterate through the stream
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(elem)
 ```
 
 ### Cache the Archive Files
 
-Caching and more implementation details are configurable via the `PyBGPKITStreamConfig` object:
+Caching and other implementation details are optional parameters on `BGPStreamConfig`:
 
 ```python
 import datetime
-from pybgpkitstream import PyBGPKITStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
-config = PyBGPKITStreamConfig(
+config = BGPStreamConfig(
     start_time=datetime.datetime(2010, 9, 1, 0, 0),
     end_time=datetime.datetime(2010, 9, 1, 2, 0),
     collectors=["route-views.wide", "rrc04"],
     data_types=["updates"],
     cache_dir="cache",
-    max_concurrent_downloads=5
+    max_concurrent_downloads=5,
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(elem)
 ```
@@ -66,7 +66,7 @@ for elem in stream:
 
 ```python
 import datetime
-from pybgpkitstream import BGPStreamConfig, FilterOptions, BGPKITStream
+from pybgpflux import BGPStreamConfig, FilterOptions, BGPStream
 
 config = BGPStreamConfig(
     start_time=datetime.datetime(2010, 9, 1, 0, 0),
@@ -79,7 +79,7 @@ config = BGPStreamConfig(
     )
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(elem)
 ```
@@ -89,7 +89,7 @@ for elem in stream:
 Stream real-time BGP updates from RIS Live:
 
 ```python
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
 # Live mode: no start/end times
 config = BGPStreamConfig(
@@ -97,7 +97,7 @@ config = BGPStreamConfig(
     data_types=["updates"],
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(f"Live: {elem}")
 ```

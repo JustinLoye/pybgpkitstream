@@ -5,11 +5,11 @@
 import datetime
 import time
 
-from pybgpkitstream import PyBGPKITStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
 for parser in ["pybgpkit", "bgpkit", "bgpdump", "pybgpstream"]:
     
-    config = PyBGPKITStreamConfig(
+    config = BGPStreamConfig(
         start_time=datetime.datetime(2010, 9, 1, 0, 0),
         end_time=datetime.datetime(2010, 9, 1, 1, 59),
         collectors=["route-views.wide", "rrc04"],
@@ -17,7 +17,7 @@ for parser in ["pybgpkit", "bgpkit", "bgpdump", "pybgpstream"]:
         parser=parser
     )
 
-    stream = BGPKITStream.from_config(config)
+    stream = BGPStream.from_config(config)
 
     start = time.perf_counter()
     n_elems = 0

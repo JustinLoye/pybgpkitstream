@@ -2,7 +2,7 @@ import time
 import pytest
 from itertools import pairwise
 
-from pybgpkitstream import LiveStreamConfig, BGPKITStream
+from pybgpflux import LiveStreamConfig, BGPStream
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def rislive_config():
 
 
 def test_rislive(rislive_config):
-    stream = BGPKITStream.from_config(rislive_config)
+    stream = BGPStream.from_config(rislive_config)
 
     rcs = set()
     times = []

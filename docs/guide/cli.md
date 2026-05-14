@@ -1,13 +1,13 @@
 # CLI Tool
 
-PyBGPKITStream includes a command-line interface for quick BGP data exploration.
+PyBGPFlux includes a command-line interface for quick BGP data exploration.
 
 ## Installation
 
 The CLI tool is automatically available after installation:
 
 ```bash
-pip install pybgpkitstream
+pip install pybgpflux
 ```
 
 ## Basic Usage
@@ -17,7 +17,7 @@ pip install pybgpkitstream
 Stream BGP updates from selected collectors:
 
 ```bash
-pybgpkitstream \
+pybgpflux \
   --start-time 2010-09-01T00:00:00 \
   --end-time 2010-09-01T02:00:00 \
   --collectors route-views.wide route-views.sydney \
@@ -39,7 +39,7 @@ Fields: `type|time|collector|peer_asn|peer_address|prefix|next-hop|as_path|commu
 ### By Origin AS
 
 ```bash
-pybgpkitstream \
+pybgpflux \
   --start-time 2010-09-01T00:00:00 \
   --end-time 2010-09-01T02:00:00 \
   --collectors route-views.wide \
@@ -50,62 +50,62 @@ pybgpkitstream \
 
 ```bash
 # Exact match
-pybgpkitstream ... --prefix 192.0.2.0/24
+pybgpflux ... --prefix 192.0.2.0/24
 
 # With super-prefixes (more general)
-pybgpkitstream ... --prefix-super 192.0.2.0/25
+pybgpflux ... --prefix-super 192.0.2.0/25
 
 # With sub-prefixes (more specific)
-pybgpkitstream ... --prefix-sub 192.0.2.0/24
+pybgpflux ... --prefix-sub 192.0.2.0/24
 
 # With both super and sub
-pybgpkitstream ... --prefix-super-sub 192.0.2.0/25
+pybgpflux ... --prefix-super-sub 192.0.2.0/25
 ```
 
 ### By Peer
 
 ```bash
 # Single peer IP
-pybgpkitstream ... --peer-ip 192.0.2.1
+pybgpflux ... --peer-ip 192.0.2.1
 
 # Multiple peer IPs
-pybgpkitstream ... --peer-ips 192.0.2.1 192.0.2.2 192.0.2.3
+pybgpflux ... --peer-ips 192.0.2.1 192.0.2.2 192.0.2.3
 
 # By peer AS
-pybgpkitstream ... --peer-asn 2497
+pybgpflux ... --peer-asn 2497
 ```
 
 ### By Update Type
 
 ```bash
 # Announcements only
-pybgpkitstream ... --update-type announce
+pybgpflux ... --update-type announce
 
 # Withdrawals only
-pybgpkitstream ... --update-type withdraw
+pybgpflux ... --update-type withdraw
 ```
 
 ### By AS Path
 
 ```bash
 # Regular expression matching
-pybgpkitstream ... --as-path ".*2497.*"
+pybgpflux ... --as-path ".*2497.*"
 ```
 
 ### By IP Version
 
 ```bash
 # IPv4 only
-pybgpkitstream ... --ip-version 4
+pybgpflux ... --ip-version 4
 
 # IPv6 only
-pybgpkitstream ... --ip-version 6
+pybgpflux ... --ip-version 6
 ```
 
 ## All Options
 
 ```bash
-pybgpkitstream --help
+pybgpflux --help
 ```
 
 Shows all available command-line options with descriptions.

@@ -1,5 +1,5 @@
 import datetime
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
 config = BGPStreamConfig(
     start_time=datetime.datetime(2010, 9, 1, 0, 0),
@@ -8,7 +8,7 @@ config = BGPStreamConfig(
     data_types=["ribs", "updates"],
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 
 n_elems = 0
 for elem in stream:

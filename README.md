@@ -1,9 +1,9 @@
-# PyBGPKITStream
+# PyBGPFlux
 
-[![Docs](https://img.shields.io/badge/docs-justinloye.github.io-blue)](https://justinloye.github.io/pybgpkitstream/)
-[![PyPI - Version](https://img.shields.io/pypi/v/pybgpkitstream.svg)](https://pypi.org/project/pybgpkitstream)
-[![CI](https://github.com/JustinLoye/pybgpkitstream/actions/workflows/ci.yml/badge.svg)](https://github.com/JustinLoye/pybgpkitstream/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/JustinLoye/pybgpkitstream.svg)](https://github.com/JustinLoye/pybgpkitstream/blob/main/LICENSE)
+[![Docs](https://img.shields.io/badge/docs-justinloye.github.io-blue)](https://justinloye.github.io/pybgpflux/)
+[![PyPI - Version](https://img.shields.io/pypi/v/pybgpflux.svg)](https://pypi.org/project/pybgpflux)
+[![CI](https://github.com/JustinLoye/pybgpflux/actions/workflows/ci.yml/badge.svg)](https://github.com/JustinLoye/pybgpflux/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/JustinLoye/pybgpflux.svg)](https://github.com/JustinLoye/pybgpflux/blob/main/LICENSE)
 
 A drop-in replacement for PyBGPStream using BGPKIT
 
@@ -22,14 +22,14 @@ A drop-in replacement for PyBGPStream using BGPKIT
 Installation:
 
 ```sh
-pip install pybgpkitstream
+pip install pybgpflux
 ```
 
 Usage:
 
 ```python
 import datetime
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
 config = BGPStreamConfig(
     start_time=datetime.datetime(2010, 9, 1, 0, 0),
@@ -38,7 +38,7 @@ config = BGPStreamConfig(
     data_types=["ribs", "updates"],
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 
 n_elems = 0
 for elem in stream:
@@ -50,7 +50,7 @@ print(f"Processed {n_elems} BGP elements")
 or in the terminal:
 
 ```sh
-pybgpkitstream --start-time 2010-09-01T00:00:00 --end-time 2010-09-01T01:59:00 --collectors route-views.sydney route-views.wide --data-types updates > updates.txt
+pybgpflux --start-time 2010-09-01T00:00:00 --end-time 2010-09-01T01:59:00 --collectors route-views.sydney route-views.wide --data-types updates > updates.txt
 ```
 
 ## Motivation

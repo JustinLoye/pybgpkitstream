@@ -2,10 +2,9 @@ import pytest
 import shutil
 import importlib
 import datetime
-from pybgpkitstream import (
-    BGPKITStream,
+from pybgpflux import (
+    BGPStream,
     BGPStreamConfig,
-    PyBGPKITStreamConfig,
     FilterOptions,
 )
 import radix
@@ -56,17 +55,16 @@ COLLECTORS = ["route-views.sydney", "route-views.wide"]
 
 def create_stream(parser: str, data_types=["updates"], filters: FilterOptions = None):
     """Helper to create a stream with specific parser and filters."""
-    stream_config = BGPStreamConfig(
+    config = BGPStreamConfig(
         start_time=BASE_START,
         end_time=BASE_END,
         collectors=COLLECTORS,
         data_types=data_types,
         filters=filters,
+        parser=parser,
+        cache_dir="cache",
     )
-    config = PyBGPKITStreamConfig(
-        bgpstream_config=stream_config, parser=parser, cache_dir="cache"
-    )
-    return BGPKITStream.from_config(config)
+    return BGPStream.from_config(config)
 
 
 @pytest.mark.parametrize("parser", PARSERS_TO_TEST)

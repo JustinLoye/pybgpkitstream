@@ -1,8 +1,8 @@
-site_name: PyBGPKITStream
+site_name: PyBGPFlux
 site_description: A drop-in replacement for PyBGPStream using BGPKIT
 site_author: JustinLoye
-repo_url: https://github.com/JustinLoye/pybgpkitstream
-repo_name: pybgpkitstream
+repo_url: https://github.com/JustinLoye/pybgpflux
+repo_name: pybgpflux
 
 theme:
   name: material
@@ -39,7 +39,7 @@ nav:
       - CLI Tool: guide/cli.md
   - API Reference:
       - Overview: api/overview.md
-      - BGPKITStream: api/bgpkitstream.md
+      - BGPStream: api/bgpstream.md
       - Configuration: api/configuration.md
       - BGPElement: api/bgpelement.md
       - Parsers: api/parsers.md

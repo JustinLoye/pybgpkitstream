@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -966,45 +966,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pybgpkit"
-version = "0.6.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "dataclasses-json" },
-    { name = "pybgpkit-parser" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e2/0a/935c823e81f75712e8f04f3cfe57974b0bb5f0ee3050b1e1ff3ac29e3d15/pybgpkit-0.6.2.tar.gz", hash = "sha256:6c7f8df1fcc4a773d0dbacf0b3b66b0a5e6f71c87a71a4739ef58561bb3be47f", size = 6226, upload-time = "2025-06-12T17:42:52.263Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fa/c0/39fc38ef729b35146c3c34c284a81a27c0fd306dc56009bb8fc877ef67ff/pybgpkit-0.6.2-py3-none-any.whl", hash = "sha256:24f601bd5ef33818237de017cd1d29fde852fe6306e077b4048e6754b5ebf017", size = 7057, upload-time = "2025-06-12T17:42:49.956Z" },
-]
-
-[[package]]
-name = "pybgpkit-parser"
-version = "0.6.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a1/45/6d4fe982e6b6bff8b3fb73ff15c8273c274183c9436865a185f5557af025/pybgpkit_parser-0.6.2.tar.gz", hash = "sha256:20a5937532edc8b7ded21e07ea01082ad90caa6c0182d1d4573c3c29880953b6", size = 21586, upload-time = "2025-06-12T17:39:32.001Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/4e/98cd220d99b53dc7727b82248eb6a3279ce532a7ea6557c4455bfeeaac23/pybgpkit_parser-0.6.2-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:c2fe780393b7a5ca7a1212e569f3bf52bc3a007b05f85e5d0e4bcf80eec7b5ca", size = 6826746, upload-time = "2025-06-12T17:44:17.405Z" },
-    { url = "https://files.pythonhosted.org/packages/03/99/9894da20ef4f4fd93388858f2f4e2c6023b5a527ad809c541553517df154/pybgpkit_parser-0.6.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:fa98ca3701a4cd179fcc995fcb7f4685f2884608bf46e1e5940fa3622162d380", size = 6071219, upload-time = "2025-06-12T17:39:23.091Z" },
-    { url = "https://files.pythonhosted.org/packages/3c/34/0d3de53825d29c35f61a62f0230af4e7474d336d8aeed60ff3c3c1aa6059/pybgpkit_parser-0.6.2-cp310-cp310-manylinux_2_34_aarch64.whl", hash = "sha256:8bab46f5ed709fe356f14e2f9a85114055c72cae36cead6d62a6579a67657963", size = 21905501, upload-time = "2025-06-12T17:41:37.51Z" },
-    { url = "https://files.pythonhosted.org/packages/57/a6/0d85d4af449f36e1fe96b1dfbadbd0d9221c6029af909b1ebd04ce3cec64/pybgpkit_parser-0.6.2-cp310-cp310-manylinux_2_34_x86_64.whl", hash = "sha256:994d400e9dcd9d67d2972f594234af86a2f33cad2cea73a8a2917cf8721f20fd", size = 23038197, upload-time = "2025-06-12T17:46:22.681Z" },
-    { url = "https://files.pythonhosted.org/packages/16/e1/ed153a5fa6490e3cd6fd3148276c03fe32f973f19b797b8a15d2a35fe96b/pybgpkit_parser-0.6.2-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:0c42fd855c6ec87bf52c7578c272d239b5bb662f2dcd8fc29215c5e58297e99d", size = 6825909, upload-time = "2025-06-12T17:44:18.819Z" },
-    { url = "https://files.pythonhosted.org/packages/0c/73/39c2f4c3a81158e30cc507dab4584a11a454158508decbe85ee148d8b169/pybgpkit_parser-0.6.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:98178d9781581ecc9e46d8acc9459c58e78878bd671a4cbfe497759d1c6fecd0", size = 6070918, upload-time = "2025-06-12T17:39:25.325Z" },
-    { url = "https://files.pythonhosted.org/packages/9c/74/b294ecabb9018c868f0d61d0e1d05e533b85af2c35bfe676a29253edba44/pybgpkit_parser-0.6.2-cp311-cp311-manylinux_2_34_aarch64.whl", hash = "sha256:d9769ae20a0c59085e51cd43761c081eac2d399ca1c744eddfdeaaa40170f2b7", size = 21904906, upload-time = "2025-06-12T17:41:40.369Z" },
-    { url = "https://files.pythonhosted.org/packages/61/b9/504bf0e4e8ad01ebc59992ff297a22dd228c29e048ff59d72a2973948027/pybgpkit_parser-0.6.2-cp311-cp311-manylinux_2_34_x86_64.whl", hash = "sha256:4191e1b5f1d08400e82e1881a593feee2c8f3ed2c4fd7130c7f02da1056e55b0", size = 23035200, upload-time = "2025-06-12T17:46:26.869Z" },
-    { url = "https://files.pythonhosted.org/packages/d4/6c/9f4d06df24f0e3ebb79d0653153cd7e7f62675f41f9fec3deee2ad7d60f2/pybgpkit_parser-0.6.2-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:aa341c9bb2b2564f89f44d0e973c5bc32ba647f7eec02ddb814151040c163f08", size = 6821257, upload-time = "2025-06-12T17:44:20.562Z" },
-    { url = "https://files.pythonhosted.org/packages/dd/5b/dd758fb116e1c73002d6223c24dcb7bbc6a89f625e273086b2295b692780/pybgpkit_parser-0.6.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b3efb89c1826849bd308961eab28f94c6290e1ba70091f89f770d0c3965eba1e", size = 6066732, upload-time = "2025-06-12T17:39:27.025Z" },
-    { url = "https://files.pythonhosted.org/packages/62/f7/b91694592f58ea9b323f48aa23a0bd753d89a6db55dbcf57abf8a6ffe67e/pybgpkit_parser-0.6.2-cp312-cp312-manylinux_2_34_aarch64.whl", hash = "sha256:bd27fa010f2476af1c623a82939bc700becb2c9b802f402eba03d266a0dcebd3", size = 21898351, upload-time = "2025-06-12T17:41:42.806Z" },
-    { url = "https://files.pythonhosted.org/packages/0a/a7/e99e8f7eb401d35cc38e1587a958bce6c39c4f962b19e27488aab0e685a4/pybgpkit_parser-0.6.2-cp312-cp312-manylinux_2_34_x86_64.whl", hash = "sha256:bdea488aa5d6c65ae90518ddce68f53c65559bee325ef2442c39e8627e65b787", size = 23027518, upload-time = "2025-06-12T17:46:31.473Z" },
-    { url = "https://files.pythonhosted.org/packages/50/5c/217f028aeee7201d4bac82845a9ab87f655f5d095b3d4ea447e50c9f08b6/pybgpkit_parser-0.6.2-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:b01b02ce9fc26d1f52c59f8596c9a59c0c94cb73d36cf99f6ef464246ab8c912", size = 6821182, upload-time = "2025-06-12T17:44:22.598Z" },
-    { url = "https://files.pythonhosted.org/packages/da/3f/6e77903260aac71958908258a5cedb7beee08606eb09c4ceb93edcc4cb30/pybgpkit_parser-0.6.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:166d50afdd48fd617a2c7d34d7a84d3dccaf7ed8f54da7c06f4c74465b8e7df5", size = 6067222, upload-time = "2025-06-12T17:39:28.837Z" },
-    { url = "https://files.pythonhosted.org/packages/f8/74/b950abf5d4570a7500217551ca576caa007b22ba6f74f5881948a93b08cb/pybgpkit_parser-0.6.2-cp313-cp313-manylinux_2_34_aarch64.whl", hash = "sha256:9c52a45051d9add4adb93f20680f6b4eeafef99e5bcab904007766b061585c65", size = 21895604, upload-time = "2025-06-12T17:41:45.778Z" },
-    { url = "https://files.pythonhosted.org/packages/a1/31/cd3c679032cfd45de0657211854f33db66f54b73f61d039525f066e88fe6/pybgpkit_parser-0.6.2-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:baf6ad6cc94f4bd2a4bee16c7388ea6e0b3d9c4e6c643a67e156aeb00b2f85c0", size = 23021836, upload-time = "2025-06-12T17:46:35.204Z" },
-]
-
-[[package]]
-name = "pybgpkitstream"
+name = "pybgpflux"
 version = "0.4.6"
 source = { editable = "." }
 dependencies = [
@@ -1066,6 +1028,44 @@ test = [
     { name = "py-radix", specifier = ">=1.1.0" },
     { name = "pybgpstream", specifier = ">=2.0.2" },
     { name = "pytest", specifier = ">=8.4.2" },
+]
+
+[[package]]
+name = "pybgpkit"
+version = "0.6.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dataclasses-json" },
+    { name = "pybgpkit-parser" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e2/0a/935c823e81f75712e8f04f3cfe57974b0bb5f0ee3050b1e1ff3ac29e3d15/pybgpkit-0.6.2.tar.gz", hash = "sha256:6c7f8df1fcc4a773d0dbacf0b3b66b0a5e6f71c87a71a4739ef58561bb3be47f", size = 6226, upload-time = "2025-06-12T17:42:52.263Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/c0/39fc38ef729b35146c3c34c284a81a27c0fd306dc56009bb8fc877ef67ff/pybgpkit-0.6.2-py3-none-any.whl", hash = "sha256:24f601bd5ef33818237de017cd1d29fde852fe6306e077b4048e6754b5ebf017", size = 7057, upload-time = "2025-06-12T17:42:49.956Z" },
+]
+
+[[package]]
+name = "pybgpkit-parser"
+version = "0.6.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/45/6d4fe982e6b6bff8b3fb73ff15c8273c274183c9436865a185f5557af025/pybgpkit_parser-0.6.2.tar.gz", hash = "sha256:20a5937532edc8b7ded21e07ea01082ad90caa6c0182d1d4573c3c29880953b6", size = 21586, upload-time = "2025-06-12T17:39:32.001Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/4e/98cd220d99b53dc7727b82248eb6a3279ce532a7ea6557c4455bfeeaac23/pybgpkit_parser-0.6.2-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:c2fe780393b7a5ca7a1212e569f3bf52bc3a007b05f85e5d0e4bcf80eec7b5ca", size = 6826746, upload-time = "2025-06-12T17:44:17.405Z" },
+    { url = "https://files.pythonhosted.org/packages/03/99/9894da20ef4f4fd93388858f2f4e2c6023b5a527ad809c541553517df154/pybgpkit_parser-0.6.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:fa98ca3701a4cd179fcc995fcb7f4685f2884608bf46e1e5940fa3622162d380", size = 6071219, upload-time = "2025-06-12T17:39:23.091Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/34/0d3de53825d29c35f61a62f0230af4e7474d336d8aeed60ff3c3c1aa6059/pybgpkit_parser-0.6.2-cp310-cp310-manylinux_2_34_aarch64.whl", hash = "sha256:8bab46f5ed709fe356f14e2f9a85114055c72cae36cead6d62a6579a67657963", size = 21905501, upload-time = "2025-06-12T17:41:37.51Z" },
+    { url = "https://files.pythonhosted.org/packages/57/a6/0d85d4af449f36e1fe96b1dfbadbd0d9221c6029af909b1ebd04ce3cec64/pybgpkit_parser-0.6.2-cp310-cp310-manylinux_2_34_x86_64.whl", hash = "sha256:994d400e9dcd9d67d2972f594234af86a2f33cad2cea73a8a2917cf8721f20fd", size = 23038197, upload-time = "2025-06-12T17:46:22.681Z" },
+    { url = "https://files.pythonhosted.org/packages/16/e1/ed153a5fa6490e3cd6fd3148276c03fe32f973f19b797b8a15d2a35fe96b/pybgpkit_parser-0.6.2-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:0c42fd855c6ec87bf52c7578c272d239b5bb662f2dcd8fc29215c5e58297e99d", size = 6825909, upload-time = "2025-06-12T17:44:18.819Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/73/39c2f4c3a81158e30cc507dab4584a11a454158508decbe85ee148d8b169/pybgpkit_parser-0.6.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:98178d9781581ecc9e46d8acc9459c58e78878bd671a4cbfe497759d1c6fecd0", size = 6070918, upload-time = "2025-06-12T17:39:25.325Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/74/b294ecabb9018c868f0d61d0e1d05e533b85af2c35bfe676a29253edba44/pybgpkit_parser-0.6.2-cp311-cp311-manylinux_2_34_aarch64.whl", hash = "sha256:d9769ae20a0c59085e51cd43761c081eac2d399ca1c744eddfdeaaa40170f2b7", size = 21904906, upload-time = "2025-06-12T17:41:40.369Z" },
+    { url = "https://files.pythonhosted.org/packages/61/b9/504bf0e4e8ad01ebc59992ff297a22dd228c29e048ff59d72a2973948027/pybgpkit_parser-0.6.2-cp311-cp311-manylinux_2_34_x86_64.whl", hash = "sha256:4191e1b5f1d08400e82e1881a593feee2c8f3ed2c4fd7130c7f02da1056e55b0", size = 23035200, upload-time = "2025-06-12T17:46:26.869Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/6c/9f4d06df24f0e3ebb79d0653153cd7e7f62675f41f9fec3deee2ad7d60f2/pybgpkit_parser-0.6.2-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:aa341c9bb2b2564f89f44d0e973c5bc32ba647f7eec02ddb814151040c163f08", size = 6821257, upload-time = "2025-06-12T17:44:20.562Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/5b/dd758fb116e1c73002d6223c24dcb7bbc6a89f625e273086b2295b692780/pybgpkit_parser-0.6.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b3efb89c1826849bd308961eab28f94c6290e1ba70091f89f770d0c3965eba1e", size = 6066732, upload-time = "2025-06-12T17:39:27.025Z" },
+    { url = "https://files.pythonhosted.org/packages/62/f7/b91694592f58ea9b323f48aa23a0bd753d89a6db55dbcf57abf8a6ffe67e/pybgpkit_parser-0.6.2-cp312-cp312-manylinux_2_34_aarch64.whl", hash = "sha256:bd27fa010f2476af1c623a82939bc700becb2c9b802f402eba03d266a0dcebd3", size = 21898351, upload-time = "2025-06-12T17:41:42.806Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/a7/e99e8f7eb401d35cc38e1587a958bce6c39c4f962b19e27488aab0e685a4/pybgpkit_parser-0.6.2-cp312-cp312-manylinux_2_34_x86_64.whl", hash = "sha256:bdea488aa5d6c65ae90518ddce68f53c65559bee325ef2442c39e8627e65b787", size = 23027518, upload-time = "2025-06-12T17:46:31.473Z" },
+    { url = "https://files.pythonhosted.org/packages/50/5c/217f028aeee7201d4bac82845a9ab87f655f5d095b3d4ea447e50c9f08b6/pybgpkit_parser-0.6.2-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:b01b02ce9fc26d1f52c59f8596c9a59c0c94cb73d36cf99f6ef464246ab8c912", size = 6821182, upload-time = "2025-06-12T17:44:22.598Z" },
+    { url = "https://files.pythonhosted.org/packages/da/3f/6e77903260aac71958908258a5cedb7beee08606eb09c4ceb93edcc4cb30/pybgpkit_parser-0.6.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:166d50afdd48fd617a2c7d34d7a84d3dccaf7ed8f54da7c06f4c74465b8e7df5", size = 6067222, upload-time = "2025-06-12T17:39:28.837Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/74/b950abf5d4570a7500217551ca576caa007b22ba6f74f5881948a93b08cb/pybgpkit_parser-0.6.2-cp313-cp313-manylinux_2_34_aarch64.whl", hash = "sha256:9c52a45051d9add4adb93f20680f6b4eeafef99e5bcab904007766b061585c65", size = 21895604, upload-time = "2025-06-12T17:41:45.778Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/31/cd3c679032cfd45de0657211854f33db66f54b73f61d039525f066e88fe6/pybgpkit_parser-0.6.2-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:baf6ad6cc94f4bd2a4bee16c7388ea6e0b3d9c4e6c643a67e156aeb00b2f85c0", size = 23021836, upload-time = "2025-06-12T17:46:35.204Z" },
 ]
 
 [[package]]

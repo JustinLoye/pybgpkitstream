@@ -50,6 +50,7 @@ class FilterOptions(BaseModel):
 class BGPStreamConfig(BaseModel):
     """Unified BGPStream config"""
 
+    # --- Query parameters (required) ---
     start_time: datetime.datetime | None = Field(
         default=None, description="Start of the stream"
     )
@@ -61,8 +62,36 @@ class BGPStreamConfig(BaseModel):
         default=["updates"],
         description="List of archives files to consider (`ribs` or `updates`)",
     )
-
     filters: FilterOptions | None = Field(default=None, description="Optional filters")
+
+    # --- Implementation parameters (optional) ---
+    max_concurrent_downloads: int | None = Field(
+        default=10, description="Maximum concurrent downloads of archive files."
+    )
+    cache_dir: DirectoryPath | None = Field(
+        default=None,
+        description="Specifies the directory for caching downloaded files.",
+    )
+    ram_fetch: bool | None = Field(
+        default=False,
+        description=(
+            "If caching is disabled, fetch temp files in shared RAM memory (/dev/shm) or normal disc temp dir (/tmp)."
+            "Default (False) to reduce RAM usage."
+        ),
+    )
+    chunk_time: datetime.timedelta | None = Field(
+        default=datetime.timedelta(hours=2),
+        description=(
+            "Interval for the fetch/parse cycles (benefits: avoid long prefetch time + periodic temps cleanup when caching is disabled)."
+            "Lower value means less RAM/disk used at the cost of performance."
+        ),
+    )
+    parser: Literal["pybgpkit", "bgpkit", "pybgpstream", "bgpdump"] = Field(
+        default="pybgpkit",
+        description=(
+            "MRT files parser. Default `pybgpkit` is installed but slow, the others are system dependencies."
+        ),
+    )
 
     @field_validator("start_time", "end_time", mode="before")
     @classmethod
@@ -75,79 +104,6 @@ class BGPStreamConfig(BaseModel):
         # if timezone-aware, convert to utc
         else:
             return dt.astimezone(datetime.timezone.utc)
-
-    @model_validator(mode="after")
-    def validate(self) -> "BGPStreamConfig":
-
-        if (self.start_time is None) ^ (self.end_time is None):
-            raise ValueError(
-                "Provide both start and end times, or leave both as None for live mode."
-            )
-        if not self.is_live():
-            assert self.start_time < self.end_time
-        # Force data_type to update for live mode
-        else:
-            if self.data_types is None:
-                self.data_types = ["updates"]
-
-        return self
-
-    def is_live(self) -> bool:
-        return self.start_time is None and self.end_time is None
-
-
-class LiveStreamConfig(BaseModel):
-    """Config for live mode"""
-
-    collectors: list[str] = Field(
-        description="List of collectors to get data from (for now only RIS live collectors)"
-    )
-    filters: FilterOptions | None = Field(default=None, description="Optional filters")
-    jitter_buffer_delay: float | None = Field(
-        default=10.0,
-        description="Jitter buffer time in seconds to make sure RIS live updates are time-sorted. Introduce a slight delay. Set to None or 0 to disable",
-    )
-
-
-class PyBGPKITStreamConfig(BaseModel):
-    """Unified BGPStream config and parameters related to PyBGPKIT implementation (all optional)"""
-
-    bgpstream_config: BGPStreamConfig | None = Field(
-        default=None,
-        description="BGPStream config (optionnal, its fields can be passed directly to avoid nesting configs)"
-    )
-
-    max_concurrent_downloads: int | None = Field(
-        default=10, description="Maximum concurrent downloads of archive files."
-    )
-
-    cache_dir: DirectoryPath | None = Field(
-        default=None,
-        description="Specifies the directory for caching downloaded files.",
-    )
-
-    ram_fetch: bool | None = Field(
-        default=False,
-        description=(
-            "If caching is disabled, fetch temp files in shared RAM memory (/dev/shml) or normal disc temp dir (/tmp)."
-            "Default (False) to reduce RAM usage."
-        ),
-    )
-
-    chunk_time: datetime.timedelta | None = Field(
-        default=datetime.timedelta(hours=2),
-        description=(
-            "Interval for the fetch/parse cycles (benefits: avoid long prefetch time + periodic temps cleanup when caching is disabled)."
-            "Lower value means less RAM/disk used at the cost of performance."
-        ),
-    )
-
-    parser: Literal["pybgpkit", "bgpkit", "pybgpstream", "bgpdump"] = Field(
-        default="pybgpkit",
-        description=(
-            "MRT files parser. Default `pybgpkit` is installed but slow, the others are system dependencies."
-        ),
-    )
 
     @field_validator("parser")
     @classmethod
@@ -182,26 +138,34 @@ class PyBGPKITStreamConfig(BaseModel):
 
         return parser
 
-    @model_validator(mode="before")
-    @classmethod
-    def nest_bgpstream_params(cls, data: dict) -> dict:
-        """Allow to define a flat config"""
-        # If the user already provided 'bgpstream_config', do nothing
-        if "bgpstream_config" in data:
-            return data
+    @model_validator(mode="after")
+    def validate(self) -> "BGPStreamConfig":
 
-        # Define which fields belong to the inner BGPStreamConfig
-        stream_fields = {
-            "start_time",
-            "end_time",
-            "collectors",
-            "data_types",
-            "filters",
-        }
+        if (self.start_time is None) ^ (self.end_time is None):
+            raise ValueError(
+                "Provide both start and end times, or leave both as None for live mode."
+            )
+        if not self.is_live():
+            assert self.start_time < self.end_time
+        # Force data_type to update for live mode
+        else:
+            if self.data_types is None:
+                self.data_types = ["updates"]
 
-        # Extract those fields from the flat input
-        inner_data = {k: data.pop(k) for k in stream_fields if k in data}
+        return self
 
-        # Nest them back into the dictionary
-        data["bgpstream_config"] = inner_data
-        return data
+    def is_live(self) -> bool:
+        return self.start_time is None and self.end_time is None
+
+
+class LiveStreamConfig(BaseModel):
+    """Config for live mode"""
+
+    collectors: list[str] = Field(
+        description="List of collectors to get data from (for now only RIS live collectors)"
+    )
+    filters: FilterOptions | None = Field(default=None, description="Optional filters")
+    jitter_buffer_delay: float | None = Field(
+        default=10.0,
+        description="Jitter buffer time in seconds to make sure RIS live updates are time-sorted. Introduce a slight delay. Set to None or 0 to disable",
+    )

@@ -7,7 +7,7 @@ Understand how to stream and process BGP data efficiently.
 The simplest way to process BGP data:
 
 ```python
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 import datetime
 
 config = BGPStreamConfig(
@@ -16,7 +16,7 @@ config = BGPStreamConfig(
     collectors=["route-views.wide"],
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 
 for elem in stream:
     print(f"{elem.type}|{elem.time}|{elem.collector}|{elem.peer_asn}|{elem.fields['prefix']}")
@@ -26,7 +26,7 @@ for elem in stream:
 
 Each element in the stream is a `BGPElement` namedtuple:
 
-::: pybgpkitstream.bgpelement.BGPElement
+::: pybgpflux.bgpelement.BGPElement
     options:
       show_source: false
 
@@ -66,7 +66,7 @@ for elem in stream:
 Stream real-time BGP updates from RIS Live:
 
 ```python
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
 # Live mode: no start_time or end_time
 config = BGPStreamConfig(
@@ -74,7 +74,7 @@ config = BGPStreamConfig(
     data_types=["updates"],
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 
 print("Streaming live BGP updates...")
 for elem in stream:
@@ -83,7 +83,7 @@ for elem in stream:
 
 ## Memory Efficiency
 
-PyBGPKITStream uses lazy loading to minimize memory usage:
+PyBGPFlux uses lazy loading to minimize memory usage:
 
 - Elements are parsed on-demand, not loaded into memory upfront
 - Large file downloads are processed chunk by chunk

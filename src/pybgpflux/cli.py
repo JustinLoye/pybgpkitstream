@@ -2,11 +2,10 @@ import argparse
 import sys
 import datetime
 
-from pybgpkitstream import (
+from pybgpflux import (
     BGPStreamConfig,
     FilterOptions,
-    PyBGPKITStreamConfig,
-    BGPKITStream,
+    BGPStream,
 )
 
 
@@ -109,7 +108,7 @@ def main():
         help="Filter by a regular expression matching the AS path.",
     )
 
-    # PyBGPKITStream implementation parameters
+    # PyBGPStream implementation parameters
     parser.add_argument(
         "--cache-dir",
         type=str,
@@ -142,20 +141,18 @@ def main():
     if all(value is None for value in filter_options.model_dump().values()):
         filter_options = None
 
-    bgpstream_config = BGPStreamConfig(
+    config = BGPStreamConfig(
         start_time=args.start_time,
         end_time=args.end_time,
         collectors=args.collectors,
         data_types=args.data_types,
         filters=filter_options,
-    )
-
-    config = PyBGPKITStreamConfig(
-        bgpstream_config=bgpstream_config, cache_dir=args.cache_dir, parser=args.parser
+        cache_dir=args.cache_dir,
+        parser=args.parser,
     )
 
     try:
-        for element in BGPKITStream.from_config(config):
+        for element in BGPStream.from_config(config):
             print(element)
     except Exception as e:
         print(f"An error occurred during streaming: {e}", file=sys.stderr)

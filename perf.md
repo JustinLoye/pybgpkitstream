@@ -1,6 +1,6 @@
 # Performances
 
-Here are reported runtime comparison between `PyBGPKITStream` and `PyBGPStream` for different scenarios.
+Here are reported runtime comparison between `PyBGPFlux` and `PyBGPStream` for different scenarios.
 Both libraries involve downloading stuff, so comparing short runtimes should be taken with a grain of salt.
 The scenarios consist in extracting BGP elements and counting them for a combination of parameters:
 
@@ -22,7 +22,7 @@ This parser is the slowest but don't need any system dependencies
 |            |           |            |          |                           |               |                           |             |             |
 | ---------- | --------- | ---------- | -------- | ------------------------- | ------------- | ------------------------- | ----------- | ----------- |
 |            |           |            |          | BGPElem count             | BGPElem count | Runtime (s)               | Runtime (s) | Analysis    |
-| Library    |           |            |          | PyBGPKITStream (pybgpkit) | PyBGPStream   | PyBGPKITStream (pybgpkit) | PyBGPStream | Speedup (x) |
+| Library    |           |            |          | PyBGPFlux (pybgpkit) | PyBGPStream   | PyBGPFlux (pybgpkit) | PyBGPStream | Speedup (x) |
 | Cache Type | Data Type | Collectors | Duration |                           |               |                           |             |             |
 | No cache   | Update    | Single     | Short    | 1189804                   | 1189817       | 17.1                      | 12.6        | 0.737       |
 | No cache   | Update    | Single     | Long     | 14677496                  | 14677533      | 198.5                     | 122.2       | 0.616       |
@@ -68,7 +68,7 @@ Run `bgpkit-parser` command (install with cargo)
 |            |           |            |          |                         |               |                         |             |             |
 | ---------- | --------- | ---------- | -------- | ----------------------- | ------------- | ----------------------- | ----------- | ----------- |
 |            |           |            |          | BGPElem count           | BGPElem count | Runtime (s)             | Runtime (s) | Analysis    |
-| Library    |           |            |          | PyBGPKITStream (bgpkit) | PyBGPStream   | PyBGPKITStream (bgpkit) | PyBGPStream | Speedup (x) |
+| Library    |           |            |          | PyBGPFlux (bgpkit) | PyBGPStream   | PyBGPFlux (bgpkit) | PyBGPStream | Speedup (x) |
 | Cache Type | Data Type | Collectors | Duration |                         |               |                         |             |             |
 | No cache   | Update    | Single     | Short    | 1192850                 | 1189817       | 5.1                     | 12.6        | 2.457       |
 | No cache   | Update    | Single     | Long     | 14681823                | 14677533      | 42.9                    | 122.2       | 2.851       |
@@ -115,7 +115,7 @@ Use PyBGPStream as an MRT parser
 |            |           |            |          |                              |               |                              |             |             |
 | ---------- | --------- | ---------- | -------- | ---------------------------- | ------------- | ---------------------------- | ----------- | ----------- |
 |            |           |            |          | BGPElem count                | BGPElem count | Runtime (s)                  | Runtime (s) | Analysis    |
-| Library    |           |            |          | PyBGPKITStream (pybgpstream) | PyBGPStream   | PyBGPKITStream (pybgpstream) | PyBGPStream | Speedup (x) |
+| Library    |           |            |          | PyBGPFlux (pybgpstream) | PyBGPStream   | PyBGPFlux (pybgpstream) | PyBGPStream | Speedup (x) |
 | Cache Type | Data Type | Collectors | Duration |                              |               |                              |             |             |
 | No cache   | Update    | Single     | Short    | 1189804                      | 1189817       | 5                            | 12.6        | 2.543       |
 | No cache   | Update    | Single     | Long     | 14677496                     | 14677533      | 39.6                         | 122.2       | 3.09        |
@@ -159,7 +159,7 @@ Use PyBGPStream as an MRT parser
 |            |           |            |          |                          |               |                          |             |             |
 | ---------- | --------- | ---------- | -------- | ------------------------ | ------------- | ------------------------ | ----------- | ----------- |
 |            |           |            |          | BGPElem count            | BGPElem count | Runtime (s)              | Runtime (s) | Analysis    |
-| Library    |           |            |          | PyBGPKITStream (bgpdump) | PyBGPStream   | PyBGPKITStream (bgpdump) | PyBGPStream | Speedup (x) |
+| Library    |           |            |          | PyBGPFlux (bgpdump) | PyBGPStream   | PyBGPFlux (bgpdump) | PyBGPStream | Speedup (x) |
 | Cache Type | Data Type | Collectors | Duration |                          |               |                          |             |             |
 | No cache   | Update    | Single     | Short    | 1189804                  | 1189817       | 4.3                      | 12.6        | 2.902       |
 | No cache   | Update    | Single     | Long     | 14677496                 | 14677533      | 35.1                     | 122.2       | 3.487       |

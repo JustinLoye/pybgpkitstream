@@ -1,7 +1,7 @@
 import pytest
 import datetime
 from itertools import pairwise
-from pybgpkitstream import BGPKITStream, BGPStreamConfig, PyBGPKITStreamConfig
+from pybgpflux import BGPStream, BGPStreamConfig
 import pybgpstream
 from tests.pybgpstream_utils import make_bgpstream
 import os
@@ -12,40 +12,35 @@ os.makedirs(cache_dir, exist_ok=True)
 
 @pytest.fixture
 def config():
-    return PyBGPKITStreamConfig(
-        bgpstream_config=BGPStreamConfig(
-            start_time=datetime.datetime(2010, 9, 1, 0, 0),
-            end_time=datetime.datetime(2010, 9, 1, 1, 59),
-            collectors=["route-views.sydney", "route-views.wide"],
-            data_types=["updates"],
-        )
+    return BGPStreamConfig(
+        start_time=datetime.datetime(2010, 9, 1, 0, 0),
+        end_time=datetime.datetime(2010, 9, 1, 1, 59),
+        collectors=["route-views.sydney", "route-views.wide"],
+        data_types=["updates"],
     )
 
 
 @pytest.fixture
 def config_with_rib():
     """Configuration with RIBs from both projects."""
-    stream_config = BGPStreamConfig(
+    rib_config = BGPStreamConfig(
         start_time=datetime.datetime(2010, 9, 1, 0, 0),
         end_time=datetime.datetime(2010, 9, 1, 9, 0),
         collectors=["route-views.wide", "rrc06"],
         data_types=["ribs"],
+        chunk_time=None,
     )
-    rib_config = PyBGPKITStreamConfig(bgpstream_config=stream_config, chunk_time=None)
     yield rib_config
 
 
 @pytest.fixture
 def config_with_cache():
     """Configuration with a temporary cache directory."""
-    stream_config = BGPStreamConfig(
+    cache_config = BGPStreamConfig(
         start_time=datetime.datetime(2010, 9, 1, 0, 0),
         end_time=datetime.datetime(2010, 9, 1, 1, 59),
         collectors=["route-views.sydney", "route-views.wide"],
         data_types=["updates"],
-    )
-    cache_config = PyBGPKITStreamConfig(
-        bgpstream_config=stream_config,
         cache_dir=cache_dir,
         max_concurrent_downloads=8,
     )
@@ -55,14 +50,11 @@ def config_with_cache():
 @pytest.fixture
 def config_with_chunk():
     """Configuration with a chunking mechanism to balance fetch/parse."""
-    stream_config = BGPStreamConfig(
+    chunk_config = BGPStreamConfig(
         start_time=datetime.datetime(2010, 9, 1, 0, 0),
         end_time=datetime.datetime(2010, 9, 1, 1, 59),
         collectors=["route-views.sydney", "route-views.wide"],
         data_types=["updates"],
-    )
-    chunk_config = PyBGPKITStreamConfig(
-        bgpstream_config=stream_config,
         cache_dir=cache_dir,
         max_concurrent_downloads=8,
         chunk_time=datetime.timedelta(minutes=15),
@@ -71,9 +63,9 @@ def config_with_chunk():
 
 
 @pytest.fixture
-def pybgpkit_stream(config):
-    """A fixture that returns a BGPKITStream object."""
-    return BGPKITStream.from_config(config)
+def pybgpflux_stream(config):
+    """A fixture that returns a BGPStream object."""
+    return BGPStream.from_config(config)
 
 
 @pytest.fixture
@@ -83,9 +75,9 @@ def pybgpstream_stream(config):
 
 
 @pytest.fixture
-def pybgpkit_stream_with_rib(config_with_rib):
-    """A BGPKITStream object using the config with ribs."""
-    return BGPKITStream.from_config(config_with_rib)
+def pybgpflux_stream_with_rib(config_with_rib):
+    """A BGPStream object using the config with ribs."""
+    return BGPStream.from_config(config_with_rib)
 
 
 @pytest.fixture
@@ -95,9 +87,9 @@ def pybgpstream_stream_with_rib(config_with_rib):
 
 
 @pytest.fixture
-def pybgpkit_stream_with_cache(config_with_cache):
-    """A BGPKITStream object using the config with cache."""
-    return BGPKITStream.from_config(config_with_cache)
+def pybgpflux_stream_with_cache(config_with_cache):
+    """A BGPStream object using the config with cache."""
+    return BGPStream.from_config(config_with_cache)
 
 
 @pytest.fixture
@@ -107,9 +99,9 @@ def pybgpstream_stream_with_cache(config_with_cache):
 
 
 @pytest.fixture
-def pybgpkit_stream_with_chunk(config_with_chunk):
-    """A BGPKITStream object using the config with chunking mechanism."""
-    return BGPKITStream.from_config(config_with_chunk)
+def pybgpflux_stream_with_chunk(config_with_chunk):
+    """A BGPStream object using the config with chunking mechanism."""
+    return BGPStream.from_config(config_with_chunk)
 
 
 @pytest.fixture
@@ -118,62 +110,62 @@ def pybgpstream_stream_with_chunk(config_with_chunk):
     return make_bgpstream(config_with_chunk)
 
 
-def test_pybgpkitstream(pybgpkit_stream, pybgpstream_stream, config):
+def test_pybgpflux(pybgpflux_stream, pybgpstream_stream, config):
     """Test if the streamw are consistent and if they return the same number of elements"""
-    assert validate_stream(pybgpkit_stream, config.bgpstream_config) == validate_stream(
-        pybgpstream_stream, config.bgpstream_config
+    assert validate_stream(pybgpflux_stream, config) == validate_stream(
+        pybgpstream_stream, config
     )
 
 
-def test_pybgpkitstream_with_rib(
-    pybgpkit_stream_with_rib, pybgpstream_stream_with_rib, config_with_rib
+def test_pybgpflux_with_rib(
+    pybgpflux_stream_with_rib, pybgpstream_stream_with_rib, config_with_rib
 ):
     """Test if the streams are consistent and if they return the same number of elements (WITH CACHE)"""
     assert validate_stream(
-        pybgpkit_stream_with_rib, config_with_rib.bgpstream_config
-    ) == validate_stream(pybgpstream_stream_with_rib, config_with_rib.bgpstream_config)
+        pybgpflux_stream_with_rib, config_with_rib
+    ) == validate_stream(pybgpstream_stream_with_rib, config_with_rib)
 
 
-def test_pybgpkitstream_with_cache(
-    pybgpkit_stream_with_cache, pybgpstream_stream_with_cache, config_with_cache
+def test_pybgpflux_with_cache(
+    pybgpflux_stream_with_cache, pybgpstream_stream_with_cache, config_with_cache
 ):
     """Test if the streams are consistent and if they return the same number of elements (WITH CACHE)"""
     assert validate_stream(
-        pybgpkit_stream_with_cache, config_with_cache.bgpstream_config
+        pybgpflux_stream_with_cache, config_with_cache
     ) == validate_stream(
-        pybgpstream_stream_with_cache, config_with_cache.bgpstream_config
+        pybgpstream_stream_with_cache, config_with_cache
     )
 
 
-def test_pybgpkitstream_with_chunk(
-    pybgpkit_stream_with_chunk, pybgpstream_stream_with_chunk, config_with_chunk
+def test_pybgpflux_with_chunk(
+    pybgpflux_stream_with_chunk, pybgpstream_stream_with_chunk, config_with_chunk
 ):
     """Test if the streams are consistent and if they return the same number of elements (WITH CACHE)"""
     assert validate_stream(
-        pybgpkit_stream_with_chunk, config_with_chunk.bgpstream_config
+        pybgpflux_stream_with_chunk, config_with_chunk
     ) == validate_stream(
-        pybgpstream_stream_with_chunk, config_with_chunk.bgpstream_config
+        pybgpstream_stream_with_chunk, config_with_chunk
     )
 
 
-def test_pybgpkitstream_with_tz(pybgpkit_stream, config):
+def test_pybgpflux_with_tz(pybgpflux_stream, config):
     """Test if the stream is consistent when changing the timezone"""
     import os
     import time
 
     os.environ["TZ"] = "UTC"
     time.tzset()
-    utc_elems = validate_stream(pybgpkit_stream, config.bgpstream_config)
+    utc_elems = validate_stream(pybgpflux_stream, config)
 
     os.environ["TZ"] = "Asia/Tokyo"
     time.tzset()
-    tokyo_elems = validate_stream(pybgpkit_stream, config.bgpstream_config)
+    tokyo_elems = validate_stream(pybgpflux_stream, config)
 
     assert utc_elems == tokyo_elems
 
 
 def validate_stream(
-    stream: BGPKITStream | pybgpstream.BGPStream, config: BGPStreamConfig
+    stream: BGPStream | pybgpstream.BGPStream, config: BGPStreamConfig
 ):
     """Test if the output of `stream` is consistent with `config`"""
 

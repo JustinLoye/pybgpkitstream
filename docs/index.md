@@ -1,10 +1,10 @@
-# PyBGPKITStream
+# PyBGPFlux
 
 A drop-in replacement for PyBGPStream using BGPKIT.
 
 ## Overview
 
-**PyBGPKITStream** is a framework designed for the streaming and analysis of BGP data from multiple RIPE RIS and RouteViews collectors. It utilizes BGPKIT's broker and parser to produce time-ordered messages from RIB and update files, serving as an alternative implementation for workflows previously utilizing PyBGPStream.
+**PyBGPFlux** is a framework designed for the streaming and analysis of BGP data from multiple RIPE RIS and RouteViews collectors. It utilizes BGPKIT's broker and parser to produce time-ordered messages from RIB and update files, serving as an alternative implementation for workflows previously utilizing PyBGPStream.
 
 ## Key Features
 
@@ -21,14 +21,14 @@ A drop-in replacement for PyBGPStream using BGPKIT.
 ## Installation
 
 ```bash
-pip install pybgpkitstream
+pip install pybgpflux
 ```
 
 ## Quick Start
 
 ```python
 import datetime
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
 # Configure the stream
 config = BGPStreamConfig(
@@ -39,7 +39,7 @@ config = BGPStreamConfig(
 )
 
 # Create stream and iterate
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(f"{elem.type}|{elem.time}|{elem.collector}|{elem.peer_asn}|{elem.fields['prefix']}")
 ```
@@ -50,13 +50,13 @@ for elem in stream:
 
 Even basic historical BGP data queries often involve several manual steps: locating the correct archive, downloading it, and parsing the contents. For more complex queries, such as those involving multiple collectors or specific time ranges, the difficulty increases as users have to manually manage and synchronize numerous archive files.
 
-The goal of PyBGPKITStream is to abstract these complexities away. This allows users to focus on the actual data analysis rather than the infrastructure and boilerplate code required to fetch it.
+The goal of PyBGPFlux is to abstract these complexities away. This allows users to focus on the actual data analysis rather than the infrastructure and boilerplate code required to fetch it.
 
 ### Why a new library to stream BGP data?
 
 While PyBGPStream has long been the primary tool for streaming historical BGP data from multiple collectors, it is currently no longer actively maintained. As of early 2026, several key features have become unreliable or non-functional, specifically support for RIPE RIS Live and data from certain RIPE RIS collectors.
 
-PyBGPKITStream was developed to fill this gap, providing a modern, maintained alternative that restores these capabilities while offering the performance benefits of the BGPKIT ecosystem.
+PyBGPFlux was developed to fill this gap, providing a modern, maintained alternative that restores these capabilities while offering the performance benefits of the BGPKIT ecosystem.
 
 ## What's Next?
 

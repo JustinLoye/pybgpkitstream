@@ -1,6 +1,6 @@
 # BGPElement
 
-::: pybgpkitstream.bgpelement.BGPElement
+::: pybgpflux.bgpelement.BGPElement
     options:
       show_source: true
       show_root_heading: true

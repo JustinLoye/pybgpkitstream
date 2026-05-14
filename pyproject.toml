@@ -1,6 +1,6 @@
 [project]
-name = "pybgpkitstream"
-version = "0.4.6"
+name = "pybgpflux"
+version = "0.5.0"
 description = "Drop-in replacement for PyBGPStream using BGPKIT"
 readme = "README.md"
 authors = [
@@ -37,7 +37,7 @@ dev = [
 ]
 
 [project.scripts]
-pybgpkitstream = "pybgpkitstream.cli:main"
+pybgpflux = "pybgpflux.cli:main"
 
 [tool.pytest.ini_options]
 log_cli = true
@@ -45,5 +45,5 @@ log_cli_level = "INFO"
 addopts = "-q -rs"
 
 [project.urls]
-Repository = "https://github.com/JustinLoye/pybgpkitstream"
-Documentation = "https://justinloye.github.io/pybgpkitstream"
+Repository = "https://github.com/JustinLoye/pybgpflux"
+Documentation = "https://justinloye.github.io/pybgpflux"

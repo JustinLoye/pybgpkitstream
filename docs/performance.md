@@ -1,16 +1,16 @@
 # Performance Guide
 
-Tips and benchmarks for optimal PyBGPKITStream performance.
+Tips and benchmarks for optimal PyBGPFlux performance.
 
 ## Performance Overview
 
-PyBGPKITStream achieves significant performance improvements over PyBGPStream for update processing:
+PyBGPFlux achieves significant performance improvements over PyBGPStream for update processing:
 
 - **Updates**: 3–10× faster than PyBGPStream
 - **RIBs**: Currently 3–4× slower (optimization in progress)
 - **Memory**: Minimal due to lazy loading
 
-For detailed benchmark results, see [perf.md](https://github.com/JustinLoye/pybgpkitstream/blob/main/perf.md) in the repository.
+For detailed benchmark results, see [perf.md](https://github.com/JustinLoye/pybgpflux/blob/main/perf.md) in the repository.
 
 ## Parser Selection
 
@@ -18,13 +18,13 @@ The biggest performance factor is parser choice:
 
 ```python
 # Fastest: bgpkit-parser (10x speedup)
-stream = BGPKITStream.from_config(config, parser_name="bgpkit")
+stream = BGPStream.from_config(config, parser_name="bgpkit")
 
 # Slow but no dependencies: pybgpkit (baseline)
-stream = BGPKITStream.from_config(config, parser_name="pybgpkit")
+stream = BGPStream.from_config(config, parser_name="pybgpkit")
 
 # Fast: bgpdump
-stream = BGPKITStream.from_config(config, parser_name="bgpdump")
+stream = BGPStream.from_config(config, parser_name="bgpdump")
 ```
 
 **Recommendation**: Install `bgpkit-parser` for production use.
@@ -35,7 +35,7 @@ Applying filters reduces data processed and improves speed:
 
 ```python
 # Original: processes all elements
-stream = BGPKITStream(
+stream = BGPStream(
     collectors=["route-views.wide"],
     data_type=["updates"],
     ts_start=1283203200,
@@ -43,7 +43,7 @@ stream = BGPKITStream(
 )
 
 # Filtered: processes fewer elements
-stream = BGPKITStream(
+stream = BGPStream(
     collectors=["route-views.wide"],
     data_type=["updates"],
     ts_start=1283203200,
@@ -58,13 +58,13 @@ Control parallel downloads:
 
 ```python
 # Default: 10 concurrent downloads
-stream = BGPKITStream(..., max_concurrent_downloads=10)
+stream = BGPStream(..., max_concurrent_downloads=10)
 
 # For memory-constrained systems
-stream = BGPKITStream(..., max_concurrent_downloads=5)
+stream = BGPStream(..., max_concurrent_downloads=5)
 
 # For high-throughput systems with plenty of memory
-stream = BGPKITStream(..., max_concurrent_downloads=20)
+stream = BGPStream(..., max_concurrent_downloads=20)
 ```
 
 ## RAM Disk Usage
@@ -73,10 +73,10 @@ Use RAM disk (if available) for temporary file storage:
 
 ```python
 # Automatic: uses /dev/shm (Linux) or /Volumes/RAMDisk (macOS)
-stream = BGPKITStream(..., ram_fetch=True)
+stream = BGPStream(..., ram_fetch=True)
 
 # Disable to use system temp directory
-stream = BGPKITStream(..., ram_fetch=False)
+stream = BGPStream(..., ram_fetch=False)
 ```
 
 **Performance benefit**: 2–3× faster I/O on systems with sufficient free RAM.
@@ -87,13 +87,13 @@ Reuse cached files to avoid re-downloading:
 
 ```python
 # Use persistent cache
-stream1 = BGPKITStream(
+stream1 = BGPStream(
     ...,
     cache_dir="/data/bgp_cache",
 )
 
 # Later: same data is reused from cache
-stream2 = BGPKITStream(
+stream2 = BGPStream(
     ...,
     cache_dir="/data/bgp_cache",
 )
@@ -107,13 +107,13 @@ Set the archive prefetch/parse interval
 
 ```python
 # Default: 2 hours per chunk
-stream = BGPKITStream(..., chunk_time=7200)
+stream = BGPStream(..., chunk_time=7200)
 
 # Smaller chunks: more requests but finer control
-stream = BGPKITStream(..., chunk_time=1800)  # 30 minutes
+stream = BGPStream(..., chunk_time=1800)  # 30 minutes
 
 # Larger chunks: fewer requests, more data at once
-stream = BGPKITStream(..., chunk_time=86400)  # 1 day
+stream = BGPStream(..., chunk_time=86400)  # 1 day
 ```
 
 ## Memory Optimization

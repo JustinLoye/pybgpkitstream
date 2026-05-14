@@ -16,22 +16,21 @@ import aiohttp
 import bgpkit
 from bgpkit.bgpkit_broker import BrokerItem
 
-from pybgpkitstream.bgpstreamconfig import (
+from pybgpflux.bgpstreamconfig import (
     BGPStreamConfig,
     FilterOptions,
-    PyBGPKITStreamConfig,
     LiveStreamConfig,
 )
-from pybgpkitstream.bgpelement import BGPElement
-from pybgpkitstream.bgpparser import (
+from pybgpflux.bgpelement import BGPElement
+from pybgpflux.bgpparser import (
     BGPParser,
     PyBGPKITParser,
     BGPKITParser,
     PyBGPStreamParser,
     BGPdumpParser,
 )
-from pybgpkitstream.rislive import RISLiveStream, jitter_buffer_stream
-from pybgpkitstream.utils import dt_from_filepath
+from pybgpflux.rislive import RISLiveStream, jitter_buffer_stream
+from pybgpflux.utils import dt_from_filepath
 
 name2parser = {
     "pybgpkit": PyBGPKITParser,
@@ -75,10 +74,10 @@ def get_shared_memory():
     return None  # Fall back to default temp directory
 
 
-class BGPKITStream:
+class BGPStream:
     """Stream and process BGP messages from multiple collectors.
 
-    BGPKITStream is a high-performance alternative to PyBGPStream that parses BGP
+    BGPStream is a high-performance alternative to PyBGPStream that parses BGP
     MRT files using BGPKIT. It can stream both historical and live BGP data with
     support for advanced filtering, multiple parser backends, and memory-efficient
     lazy loading.
@@ -105,7 +104,7 @@ class BGPKITStream:
             end_time=datetime.datetime(2010, 9, 1, 2, 0),
             collectors=["route-views.wide"],
         )
-        stream = BGPKITStream.from_config(config)
+        stream = BGPStream.from_config(config)
         for elem in stream:
             print(elem)
         ```
@@ -113,7 +112,7 @@ class BGPKITStream:
         Direct instantiation with filters:
 
         ```python
-        stream = BGPKITStream(
+        stream = BGPStream(
             collectors=["route-views.wide"],
             data_type=["update"],
             ts_start=1283203200,
@@ -132,7 +131,7 @@ class BGPKITStream:
             collectors=["rrc00"],
             data_types=["updates"],
         )
-        stream = BGPKITStream.from_config(config)
+        stream = BGPStream.from_config(config)
         for elem in stream:
             print(f"Live: {elem.type} {elem.prefix}")
         ```
@@ -484,25 +483,24 @@ class BGPKITStream:
 
     @classmethod
     def from_config(
-        cls, config: PyBGPKITStreamConfig | BGPStreamConfig | LiveStreamConfig
-    ) -> "BGPKITStream":
-        """Create a BGPKITStream from a configuration object.
+        cls, config: BGPStreamConfig | LiveStreamConfig
+    ) -> "BGPStream":
+        """Create a BGPStream from a configuration object.
 
         Factory method to create a stream from various configuration types,
         automatically handling conversions and parameter mappings.
 
         Args:
             config: Configuration object, one of:
-                - BGPStreamConfig: Standard unified configuration.
-                - PyBGPKITStreamConfig: Extended configuration with caching and parser options.
+                - BGPStreamConfig: Unified configuration with query and implementation options.
                 - LiveStreamConfig: Configuration for live RIS Live streaming.
 
         Returns:
-            BGPKITStream: Initialized stream ready for iteration.
+            BGPStream: Initialized stream ready for iteration.
 
         Examples:
             ```python
-            from pybgpkitstream import BGPStreamConfig, BGPKITStream
+            from pybgpflux import BGPStreamConfig, BGPStream
             import datetime
 
             config = BGPStreamConfig(
@@ -510,31 +508,12 @@ class BGPKITStream:
                 end_time=datetime.datetime(2010, 9, 1, 2, 0),
                 collectors=["route-views.wide"],
             )
-            stream = BGPKITStream.from_config(config)
+            stream = BGPStream.from_config(config)
             for elem in stream:
                 print(elem)
             ```
         """
-        if isinstance(config, PyBGPKITStreamConfig):
-            stream_config = config.bgpstream_config
-            return cls(
-                ts_start=stream_config.start_time.timestamp(),
-                ts_end=stream_config.end_time.timestamp(),
-                collectors=stream_config.collectors,
-                data_type=[dtype[:-1] for dtype in stream_config.data_types],
-                filters=stream_config.filters
-                if stream_config.filters
-                else FilterOptions(),
-                cache_dir=str(config.cache_dir) if config.cache_dir else None,
-                max_concurrent_downloads=config.max_concurrent_downloads
-                if config.max_concurrent_downloads
-                else 10,
-                chunk_time=config.chunk_time.seconds if config.chunk_time else None,
-                ram_fetch=config.ram_fetch if config.ram_fetch else None,
-                parser_name=config.parser if config.parser else "pybgpkit",
-            )
-
-        elif isinstance(config, BGPStreamConfig):
+        if isinstance(config, BGPStreamConfig):
             if not config.is_live():
                 return cls(
                     ts_start=config.start_time.timestamp(),
@@ -542,6 +521,13 @@ class BGPKITStream:
                     collectors=config.collectors,
                     data_type=[dtype[:-1] for dtype in config.data_types],
                     filters=config.filters if config.filters else FilterOptions(),
+                    cache_dir=str(config.cache_dir) if config.cache_dir else None,
+                    max_concurrent_downloads=config.max_concurrent_downloads
+                    if config.max_concurrent_downloads
+                    else 10,
+                    chunk_time=config.chunk_time.seconds if config.chunk_time else None,
+                    ram_fetch=config.ram_fetch if config.ram_fetch else None,
+                    parser_name=config.parser if config.parser else "pybgpkit",
                 )
             else:
                 return cls(

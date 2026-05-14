@@ -1,6 +1,6 @@
-# BGPKITStream Class
+# BGPStream Class
 
-::: pybgpkitstream.bgpkitstream.BGPKITStream
+::: pybgpflux.bgpstream.BGPStream
     options:
       show_source: true
       show_root_heading: true

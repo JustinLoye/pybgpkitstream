@@ -1,6 +1,6 @@
 # Parser Backends
 
-PyBGPKITStream supports multiple parser backends for different use cases.
+PyBGPFlux supports multiple parser backends for different use cases.
 
 ## Available Parsers
 
@@ -12,7 +12,7 @@ PyBGPKITStream supports multiple parser backends for different use cases.
 - **Use Case**: Zero-dependency installation, prototyping
 
 ```python
-stream = BGPKITStream.from_config(config, parser_name="pybgpkit")
+stream = BGPStream.from_config(config, parser_name="pybgpkit")
 ```
 
 ### BGPKIT Parser
@@ -28,7 +28,7 @@ cargo install bgpkit-parser --features cli
 ```
 
 ```python
-stream = BGPKITStream.from_config(config, parser_name="bgpkit")
+stream = BGPStream.from_config(config, parser_name="bgpkit")
 ```
 
 ### BGPDump
@@ -44,7 +44,7 @@ apt-get install bgpdump
 ```
 
 ```python
-stream = BGPKITStream.from_config(config, parser_name="bgpdump")
+stream = BGPStream.from_config(config, parser_name="bgpdump")
 ```
 
 ### PyBGPStream
@@ -54,8 +54,8 @@ stream = BGPKITStream.from_config(config, parser_name="bgpdump")
 - **Dependencies**: `pip install pybgpstream`
 - **Use Case**: Large-scale processing
 
-Installation: follow the [CI steps](https://github.com/JustinLoye/pybgpkitstream/blob/main/.github/workflows/ci.yml)
+Installation: follow the [CI steps](https://github.com/JustinLoye/pybgpflux/blob/main/.github/workflows/ci.yml)
 
 ```python
-stream = BGPKITStream.from_config(config, parser_name="pybgpstream")
+stream = BGPStream.from_config(config, parser_name="pybgpstream")
 ```

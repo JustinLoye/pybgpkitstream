@@ -1,17 +1,15 @@
 from .bgpstreamconfig import (
     BGPStreamConfig,
     FilterOptions,
-    PyBGPKITStreamConfig,
     LiveStreamConfig,
 )
-from .bgpkitstream import BGPKITStream
+from .bgpstream import BGPStream
 from .bgpelement import BGPElement
 
 __all__ = [
     "BGPStreamConfig",
     "FilterOptions",
-    "BGPKITStream",
-    "PyBGPKITStreamConfig",
+    "BGPStream",
     "BGPElement",
     "LiveStreamConfig",
 ]

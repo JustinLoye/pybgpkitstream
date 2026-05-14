@@ -13,7 +13,7 @@ The `FilterOptions` class provides comprehensive filtering capabilities. See [AP
 Focus on prefixes originated by a specific AS:
 
 ```python
-from pybgpkitstream import BGPStreamConfig, FilterOptions
+from pybgpflux import BGPStreamConfig, FilterOptions
 import datetime
 
 config = BGPStreamConfig(

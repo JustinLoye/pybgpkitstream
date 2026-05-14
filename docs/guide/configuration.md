@@ -1,32 +1,13 @@
 # Configuration Guide
 
-PyBGPKITStream provides two configuration models for different use cases:
+`BGPStreamConfig` is the single configuration model for PyBGPFlux. It combines both the query specification (what data to retrieve) and optional implementation parameters (how to retrieve it).
 
-- **`BGPStreamConfig`**: Query specification (what data to retrieve)
-- **`PyBGPKITStreamConfig`**: Implementation details (how to retrieve it)
-
-Providing implementation details is optionnal.
-
-## Configuration Models
-
-### BGPStreamConfig: Query Specification
-
-`BGPStreamConfig` defines the BGP data query: collectors, time range, data types, and filters. It's format-agnostic and could work with any BGP data provider. See [API Reference](../api/configuration.md#bgpstreamconfig) for full documentation.
-
-### PyBGPKITStreamConfig: Implementation Configuration
-
-`PyBGPKITStreamConfig` extends the query specification with PyBGPKITStream-specific parameters: parser selection, caching strategy, concurrent download limits, and memory options. See [API Reference](../api/configuration.md#pybgpkitstreamconfig) for full documentation.
+See [API Reference](../api/configuration.md#bgpstreamconfig) for full documentation.
 
 ## Creating Streams
 
-You have three approaches:
-
-### Approach 1: Simple Queries with BGPStreamConfig
-
-For basic queries without implementation customization, use `BGPStreamConfig`:
-
 ```python
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 import datetime
 
 config = BGPStreamConfig(
@@ -36,74 +17,44 @@ config = BGPStreamConfig(
     data_types=["updates"],
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(elem)
 ```
 
-### Approach 2: Full Control with PyBGPKITStreamConfig
+### With Implementation Options
 
-For explicit control over implementation details, use `PyBGPKITStreamConfig` with nested `BGPStreamConfig`:
+For control over caching, parser selection, and download concurrency, pass the optional parameters directly:
 
 ```python
-from pybgpkitstream import BGPStreamConfig, PyBGPKITStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 import datetime
 
-query = BGPStreamConfig(
+config = BGPStreamConfig(
+    # Query parameters
     start_time=datetime.datetime(2010, 9, 1, 0, 0),
     end_time=datetime.datetime(2010, 9, 1, 2, 0),
     collectors=["route-views.wide"],
     data_types=["updates"],
-)
-
-config = PyBGPKITStreamConfig(
-    bgpstream_config=query,
+    # Implementation parameters (all optional)
     parser="bgpkit",
     max_concurrent_downloads=20,
     cache_dir="/tmp/bgp_cache",
     ram_fetch=True,
 )
 
-stream = BGPKITStream.from_config(config)
-for elem in stream:
-    print(elem)
-```
-
-### Approach 3: Flat Configuration (Recommended for Most Users)
-
-**BGPStreamConfig fields can be passed directly to PyBGPKITStreamConfig**, eliminating the need for nesting. This is the most practical approach when you need implementation customization:
-
-```python
-from pybgpkitstream import PyBGPKITStreamConfig, BGPKITStream
-import datetime
-
-# Pass BGPStreamConfig fields directly—no nesting required
-config = PyBGPKITStreamConfig(
-    start_time=datetime.datetime(2010, 9, 1, 0, 0),
-    end_time=datetime.datetime(2010, 9, 1, 2, 0),
-    collectors=["route-views.wide"],
-    data_types=["updates"],
-    # Implementation parameters
-    parser="bgpkit",
-    max_concurrent_downloads=10,
-    cache_dir="/tmp/bgp_cache",
-    ram_fetch=True,
-)
-
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(elem)
 ```
 
 ## Query Parameters
 
-These parameters define the BGP data query and are part of `BGPStreamConfig`:
-
 ### Time-Based Selection
 
 ```python
 import datetime
-from pybgpkitstream import BGPStreamConfig
+from pybgpflux import BGPStreamConfig
 
 # Specify exact time range
 config = BGPStreamConfig(
@@ -158,16 +109,16 @@ config = BGPStreamConfig(
 
 ## Implementation Parameters
 
-These parameters control how PyBGPKITStream retrieves and processes data. They are part of `PyBGPKITStreamConfig`:
+These optional parameters control how PyBGPFlux retrieves and processes data:
 
 ### Parser Selection
 
 ```python
-from pybgpkitstream import PyBGPKITStreamConfig
+from pybgpflux import BGPStreamConfig
 import datetime
 
 # Default: pybgpkit (pure Python, slower but no dependencies)
-config = PyBGPKITStreamConfig(
+config = BGPStreamConfig(
     start_time=datetime.datetime(2010, 9, 1, 0, 0),
     end_time=datetime.datetime(2010, 9, 1, 2, 0),
     collectors=["route-views.wide"],
@@ -175,19 +126,19 @@ config = PyBGPKITStreamConfig(
 )
 
 # bgpkit-parser (requires system install, fastest)
-config = PyBGPKITStreamConfig(
+config = BGPStreamConfig(
     ...,
     parser="bgpkit",
 )
 
 # bgpdump (requires system install)
-config = PyBGPKITStreamConfig(
+config = BGPStreamConfig(
     ...,
     parser="bgpdump",
 )
 
 # pybgpstream (requires pip install pybgpstream)
-config = PyBGPKITStreamConfig(
+config = BGPStreamConfig(
     ...,
     parser="pybgpstream",
 )
@@ -196,9 +147,9 @@ config = PyBGPKITStreamConfig(
 ### Caching and Download Strategy
 
 ```python
-from pybgpkitstream import PyBGPKITStreamConfig
+from pybgpflux import BGPStreamConfig
 
-config = PyBGPKITStreamConfig(
+config = BGPStreamConfig(
     ...,
     cache_dir="/tmp/bgp_cache",           # Directory for downloaded files
     ram_fetch=True,                        # Use /dev/shm (Linux) or /Volumes/RAMDisk (macOS) when cache is disabled
@@ -213,14 +164,14 @@ config = PyBGPKITStreamConfig(
 - `max_concurrent_downloads`: Balance between download speed and resource consumption.
 - `chunk_time`: Interval for fetch/parse cycles. Smaller intervals reduce memory usage at the cost of throughput.
 
-## Direct BGPKITStream Constructor
+## Direct BGPStream Constructor
 
-It's possible to bypass Pydantic config validation by instantiating `BGPKITStream` directly:
+It's possible to bypass Pydantic config validation by instantiating `BGPStream` directly:
 
 ```python
-from pybgpkitstream import BGPKITStream
+from pybgpflux import BGPStream
 
-stream = BGPKITStream(
+stream = BGPStream(
     collectors=["route-views.wide"],
     data_type=["updates"],
     ts_start=1283203200,  # Unix timestamp

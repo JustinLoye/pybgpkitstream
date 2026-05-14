@@ -1,13 +1,13 @@
 import time
 from itertools import pairwise
 
-from pybgpkitstream import LiveStreamConfig, BGPKITStream
+from pybgpflux import LiveStreamConfig, BGPStream
 
 
 # Normal mode, will transform RIS Live data to BGPElements
 rislive_config = LiveStreamConfig(collectors=["rrc00", "rrc07", "rrc21"], jitter_buffer_delay=None)
 
-stream = BGPKITStream.from_config(rislive_config)
+stream = BGPStream.from_config(rislive_config)
 
 times = []
 start = time.time()
@@ -24,7 +24,7 @@ assert not all(t1 <= t2 for t1, t2 in pairwise(times))
 # Here we add 15 seconds of latency.
 rislive_config = LiveStreamConfig(collectors=["rrc00", "rrc07", "rrc21"], jitter_buffer_delay=15.0)
 
-stream = BGPKITStream.from_config(rislive_config)
+stream = BGPStream.from_config(rislive_config)
 
 times = []
 start = time.time()

@@ -1,15 +1,15 @@
 # API Reference
 
-Complete Python API documentation for PyBGPKITStream.
+Complete Python API documentation for PyBGPFlux.
 
 ## Core Classes
 
-### [BGPKITStream](bgpkitstream.md)
+### [BGPStream](bgpstream.md)
 
 The main class for creating and iterating through BGP streams.
 
 ```python
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 import datetime
 
 config = BGPStreamConfig(
@@ -18,7 +18,7 @@ config = BGPStreamConfig(
     collectors=["route-views.wide"],
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(elem)
 ```
@@ -30,7 +30,7 @@ for elem in stream:
 - **FilterOptions**: Filtering options for BGP elements
 
 ```python
-from pybgpkitstream import BGPStreamConfig, FilterOptions
+from pybgpflux import BGPStreamConfig, FilterOptions
 
 config = BGPStreamConfig(
     start_time=...,
@@ -66,9 +66,9 @@ elem.fields      # Dictionary with prefix, as-path, etc.
 ## Module Structure
 
 ```
-pybgpkitstream/
+pybgpflux/
 ├── __init__.py              # Main exports
-├── bgpkitstream.py          # BGPKITStream class
+├── bgpstream.py             # BGPStream class
 ├── bgpstreamconfig.py       # Configuration classes
 ├── bgpelement.py            # BGPElement NamedTuple
 ├── bgpparser.py             # Parser implementations

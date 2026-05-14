@@ -1,22 +1,22 @@
 # FAQ
 
-Frequently asked questions about PyBGPKITStream.
+Frequently asked questions about PyBGPFlux.
 
 ## Why do I need a library to stream BGP data?
 
 Even basic historical BGP data queries often involve several manual steps: locating the correct archive, downloading it, and parsing the contents. For more complex queries, such as those involving multiple collectors or specific time ranges, the difficulty increases as users have to manually manage and synchronize numerous archive files.
 
-The goal of PyBGPStream and PyBGPKITStream is to abstract these complexities away. This allows users to focus on the actual data analysis rather than the infrastructure and boilerplate code required to fetch it.
+The goal of PyBGPStream and PyBGPFlux is to abstract these complexities away. This allows users to focus on the actual data analysis rather than the infrastructure and boilerplate code required to fetch it.
 
 ## Why a new library to stream BGP data?
 
 While PyBGPStream has long been the primary tool for streaming historical BGP data from multiple collectors, it is currently no longer actively maintained. As of early 2026, several key features have become unreliable or non-functional, specifically support for RIS Live and data from certain RIS collectors.
 
-PyBGPKITStream was developed to fill this gap, providing a modern, maintained alternative that restores these capabilities while offering the performance benefits of the BGPKIT ecosystem.
+PyBGPFlux was developed to fill this gap, providing a modern, maintained alternative that restores these capabilities while offering the performance benefits of the BGPKIT ecosystem.
 
-## What's the difference between PyBGPKITStream and PyBGPStream?
+## What's the difference between PyBGPFlux and PyBGPStream?
 
-PyBGPKITStream is a drop-in replacement for PyBGPStream that uses BGPKIT for retrieve and parsing MRT files. Key advantages:
+PyBGPFlux is a drop-in replacement for PyBGPStream that uses BGPKIT for retrieve and parsing MRT files. Key advantages:
 
 - **More flexible**: Multiple parser backends
 - **Modern Python**: Type hints, pydantic for configuration
@@ -29,14 +29,14 @@ Setting up the stream is different, but the output BGP elements have the same fo
 Yes! Set both `start_time` and `end_time` to `None` for live mode:
 
 ```python
-from pybgpkitstream import BGPStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
 config = BGPStreamConfig(
     collectors=["rrc00"],
     data_types=["updates"],
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(elem)  # Live updates
 ```
@@ -46,7 +46,7 @@ for elem in stream:
 Use `FilterOptions`:
 
 ```python
-from pybgpkitstream import FilterOptions
+from pybgpflux import FilterOptions
 
 filters = FilterOptions(
     peer_asn=2497,             # Specific AS
@@ -81,22 +81,22 @@ filters = FilterOptions(
 
 ### Cache the Archive Files
 
-Caching and more implementation details are configurable via the `PyBGPKITStreamConfig` object:
+Caching and other implementation details are optional parameters on `BGPStreamConfig`:
 
 ```python
 import datetime
-from pybgpkitstream import PyBGPKITStreamConfig, BGPKITStream
+from pybgpflux import BGPStreamConfig, BGPStream
 
-config = PyBGPKITStreamConfig(
+config = BGPStreamConfig(
     start_time=datetime.datetime(2010, 9, 1, 0, 0),
     end_time=datetime.datetime(2010, 9, 1, 2, 0),
     collectors=["route-views.wide", "rrc04"],
     data_types=["updates"],
     cache_dir="cache",
-    max_concurrent_downloads=5
+    max_concurrent_downloads=5,
 )
 
-stream = BGPKITStream.from_config(config)
+stream = BGPStream.from_config(config)
 for elem in stream:
     print(elem)
 ```
@@ -128,5 +128,5 @@ elements = list(stream)  # AVOID for large datasets!
 
 ## More Help
 
-- **Issues**: [GitHub Issues](https://github.com/JustinLoye/pybgpkitstream/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/JustinLoye/pybgpkitstream/discussions)
+- **Issues**: [GitHub Issues](https://github.com/JustinLoye/pybgpflux/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/JustinLoye/pybgpflux/discussions)
